@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>오늘부터, 하나씩</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<style>
+:root{
+  /* ===== 무드 레퍼런스: 오렌지~코랄 그라데이션, 따뜻한 화이트 베이스 ===== */
+  --c-orange-50:  #FFF4ED;
+  --c-orange-100: #FFE4D4;
+  --c-orange-200: #FFC9A8;
+  --c-orange-300: #FFA56C;
+  --c-orange-400: #FF7A3D;
+  --c-orange-500: #F2622A;
+  --c-orange-600: #D94E1C;
+  --c-coral-300:  #FF9D85;
+  --c-coral-400:  #FF7A5C;
+
+  --c-bg:        #FFFBF8;
+  --c-surface:   #FFFFFF;
+  --c-surface-2: #FFF6F0;
+  --c-border:    #F0E2D8;
+  --c-border-2:  #E8D5C6;
+
+  --c-text:      #2B221C;
+  --c-text-2:    #8A7A6E;
+  --c-text-3:    #BBA999;
+
+  --c-success:   #4F9D6E;
+  --c-success-bg:#EAF5EE;
+  --c-danger:    #D9534F;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 2px 12px rgba(217, 100, 50, 0.06);
+  --shadow-card: 0 4px 20px rgba(217, 100, 50, 0.08);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+  height:100%;
+}
+button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+input,select,textarea{ font-family:inherit; }
+
+/* ===================== 배경 워시 ===================== */
+.bg-wash{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.bg-wash::before{
+  content:""; position:absolute; top:-20%; right:-15%; width:60vw; height:60vw; max-width:600px; max-height:600px;
+  background: radial-gradient(circle, var(--c-orange-100) 0%, rgba(255,228,212,0) 70%);
+  border-radius:50%;
+}
+.bg-wash::after{
+  content:""; position:absolute; bottom:-25%; left:-15%; width:50vw; height:50vw; max-width:500px; max-height:500px;
+  background: radial-gradient(circle, var(--c-orange-50) 0%, rgba(255,244,237,0) 70%);
+  border-radius:50%;
+}
+
+/* ===================== 레이아웃 셸 ===================== */
+#app{ min-height:100vh; display:flex; flex-direction:column; }
+.shell{ flex:1; display:flex; width:100%; max-width:1100px; margin:0 auto; }
+
+.sidebar{ display:none; width:220px; flex-shrink:0; padding:32px 16px; flex-direction:column; gap:4px; }
+.sidebar .brand{ font-size:17px; font-weight:500; padding:0 12px 24px; display:flex; align-items:center; gap:8px; }
+.sidebar .brand .dot{ width:8px;height:8px;border-radius:50%; background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); }
+.nav-item{ display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:var(--radius-md); font-size:14px; color:var(--c-text-2); transition:background .15s, color .15s; text-align:left; width:100%; }
+.nav-item:hover{ background:var(--c-surface-2); color:var(--c-text); }
+.nav-item.active{ background:var(--c-orange-50); color:var(--c-orange-600); font-weight:500; }
+.nav-item .ic{ width:18px; height:18px; flex-shrink:0; }
+
+.main{ flex:1; min-width:0; padding:20px 16px 96px; }
+@media (min-width:768px){ .sidebar{ display:flex; } .main{ padding:32px 32px 48px; } }
+
+.page{ display:none; max-width:640px; }
+.page.active{ display:block; }
+.page.wide{ max-width:760px; }
+@media (min-width:768px){ .page{ max-width:580px; } .page.wide{ max-width:760px; } }
+
+/* ===================== 하단 탭바 ===================== */
+.tabbar{ position:fixed; bottom:0; left:0; right:0; background:var(--c-surface); border-top:0.5px solid var(--c-border); display:flex; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); z-index:50; }
+@media (min-width:768px){ .tabbar{ display:none; } }
+.tab-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 4px; font-size:11px; color:var(--c-text-3); border-radius:var(--radius-sm); }
+.tab-item.active{ color:var(--c-orange-500); }
+.tab-item .ic{ width:22px; height:22px; }
+
+/* ===================== 공통 카드 ===================== */
+.card{ background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-lg); padding:20px; box-shadow:var(--shadow-soft); }
+.section-label{ font-size:12px; color:var(--c-text-3); margin-bottom:10px; font-weight:500; }
+.section-label.with-action{ display:flex; justify-content:space-between; align-items:center; }
+
+/* ===================== 캐릭터 / 헤더 카드 ===================== */
+.hero-card{
+  background:linear-gradient(160deg, var(--c-orange-50) 0%, var(--c-surface) 65%);
+  border:0.5px solid var(--c-border); border-radius:var(--radius-lg);
+  padding:20px; margin-bottom:16px; box-shadow:var(--shadow-card);
+}
+.hero-top{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+
+.char-stage{ position:relative; width:64px; height:64px; flex-shrink:0; }
+.char-wrap{
+  width:64px; height:64px; border-radius:50%;
+  background:linear-gradient(135deg, var(--c-orange-200), var(--c-coral-300));
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  box-shadow:0 2px 8px rgba(255,122,61,0.25);
+}
+.char-wrap img{ width:100%; height:100%; object-fit:cover; }
+.char-wrap.empty .ic{ width:30px; height:30px; color:var(--c-surface); }
+.char-upload-btn{
+  position:absolute; bottom:-2px; right:-2px; width:22px; height:22px;
+  background:var(--c-surface); border:0.5px solid var(--c-border-2); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.1);
+  z-index:5;
+}
+.char-upload-btn .ic{ width:12px; height:12px; color:var(--c-orange-500); }
+.decor{ position:absolute; pointer-events:none; }
+.decor svg{ width:100%; height:100%; }
+
+.hero-greet{ font-size:15px; font-weight:500; margin-bottom:3px; }
+.hero-sub{ font-size:13px; color:var(--c-text-2); }
+
+.level-row{ display:flex; align-items:center; gap:8px; margin-top:6px; }
+.level-badge{
+  font-size:11px; font-weight:500; padding:2px 9px; border-radius:var(--radius-pill);
+  background:var(--c-orange-100); color:var(--c-orange-600);
+}
+.level-progress-track{ flex:1; height:5px; background:var(--c-orange-50); border-radius:3px; overflow:hidden; max-width:120px; }
+.level-progress-fill{ height:100%; background:linear-gradient(90deg, var(--c-orange-400), var(--c-coral-400)); border-radius:3px; transition:width .4s; }
+
+.stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
+.stat-box{ background:rgba(255,255,255,0.7); border:0.5px solid var(--c-border); border-radius:var(--radius-md); padding:13px 14px; cursor:pointer; transition:transform .12s; }
+.stat-box:active{ transform:scale(0.97); }
+.stat-box .num{ font-size:22px; font-weight:500; line-height:1.2; }
+.stat-box .lbl{ font-size:12px; color:var(--c-text-2); margin-top:2px; }
+.stat-box .lbl .fire{ display:inline-block; }
+
+.bars{ display:flex; align-items:flex-end; gap:6px; height:42px; }
+.bar{ flex:1; border-radius:4px 4px 0 0; background:var(--c-orange-200); transition:height .3s; position:relative; }
+.bar.today{ background:linear-gradient(180deg, var(--c-orange-400), var(--c-coral-400)); }
+
+/* ===================== 7일 뷰 ===================== */
+.day-group{ margin-bottom:18px; }
+.day-group:last-child{ margin-bottom:0; }
+.day-head{ display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:0 2px; }
+.day-head .day-name{ font-size:13.5px; font-weight:500; color:var(--c-text); }
+.day-head .day-name.muted{ color:var(--c-text-3); font-weight:400; }
+.day-head .day-date{ font-size:12px; color:var(--c-text-3); }
+.day-head .today-pill{
+  font-size:10.5px; font-weight:500; padding:2px 8px; border-radius:var(--radius-pill);
+  background:var(--c-orange-400); color:white;
+}
+.day-head .count-pill{ font-size:11px; color:var(--c-text-3); margin-left:auto; }
+.day-divider{ height:1px; background:var(--c-border); margin:0 0 8px; }
+
+.task-list{ display:flex; flex-direction:column; gap:8px; }
+.task-row{
+  display:flex; align-items:center; gap:12px;
+  background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-md);
+  padding:13px 16px; transition:opacity .2s, transform .15s;
+}
+.task-row:active{ transform:scale(0.99); }
+.task-row.done{ opacity:0.45; }
+.task-row.done .task-title{ text-decoration:line-through; }
+.task-row.far{ opacity:0.75; }
+
+.check-btn{ width:23px; height:23px; flex-shrink:0; border-radius:50%; border:1.5px solid var(--c-border-2); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.check-btn.checked{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); border-color:transparent; }
+.check-btn .ic{ width:12px; height:12px; color:white; opacity:0; transition:opacity .1s; }
+.check-btn.checked .ic{ opacity:1; }
+.task-body{ flex:1; min-width:0; }
+.task-title{ font-size:14.5px; font-weight:500; margin-bottom:3px; }
+.task-meta{ font-size:12px; color:var(--c-text-2); display:flex; align-items:center; gap:6px; }
+.chip{ display:inline-flex; align-items:center; font-size:11px; padding:2px 8px; border-radius:var(--radius-pill); background:var(--c-orange-50); color:var(--c-orange-600); font-weight:500; flex-shrink:0; }
+.chip.event{ background:#EFF3FF; color:#4D6BC9; }
+
+.empty-state{ text-align:center; padding:36px 20px; color:var(--c-text-3); }
+.empty-state .ic{ width:32px; height:32px; margin:0 auto 10px; opacity:0.5; }
+.empty-state p{ font-size:13.5px; }
+.empty-week{ text-align:center; padding:40px 20px; color:var(--c-text-3); }
+.empty-week .ic{ width:36px; height:36px; margin:0 auto 12px; opacity:0.5; }
+.empty-week p{ font-size:14px; }
+
+/* ===================== 놓친 일 ===================== */
+#missedList .task-row{
+  background:var(--c-surface-2);
+  border-color:var(--c-border-2);
+}
+#missedList .task-meta .chip{
+  background:#FFF0E8; color:var(--c-text-2);
+}
+
+/* ===================== FAB ===================== */
+.fab{ position:fixed; bottom:84px; right:20px; width:54px; height:54px; border-radius:50%;
+  background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400));
+  display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(242,98,42,0.35); z-index:40; transition:transform .15s; }
+.fab:active{ transform:scale(0.92); }
+.fab .ic{ width:24px; height:24px; color:white; }
+@media (min-width:768px){ .fab{ bottom:32px; right:32px; width:58px; height:58px; } }
+
+/* ===================== 모달 공통 ===================== */
+.modal-overlay{ position:fixed; inset:0; background:rgba(43,34,28,0.4); display:none; align-items:flex-end; justify-content:center; z-index:100; }
+.modal-overlay.open{ display:flex; }
+@media (min-width:768px){ .modal-overlay{ align-items:center; } }
+.modal{ background:var(--c-surface); width:100%; max-width:480px; border-radius:24px 24px 0 0; padding:24px 20px calc(24px + env(safe-area-inset-bottom)); max-height:88vh; overflow-y:auto; }
+@media (min-width:768px){ .modal{ border-radius:var(--radius-lg); padding:28px; max-height:80vh; } }
+.modal-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.modal-title{ font-size:17px; font-weight:500; }
+.modal-close{ width:30px; height:30px; display:flex; align-items:center; justify-content:center; color:var(--c-text-2); }
+.modal-close .ic{ width:18px; height:18px; }
+
+.field-group{ margin-bottom:18px; }
+.field-label{ font-size:12.5px; color:var(--c-text-2); margin-bottom:8px; font-weight:500; }
+.title-input{ width:100%; font-size:16px; padding:13px 14px; border:1.5px solid var(--c-border-2); border-radius:var(--radius-md); background:var(--c-surface-2); transition:border-color .15s; }
+.title-input:focus{ outline:none; border-color:var(--c-orange-400); background:var(--c-surface); }
+
+.choice-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.choice-btn{ font-size:13.5px; padding:9px 16px; border:1.5px solid var(--c-border-2); border-radius:var(--radius-pill); color:var(--c-text-2); transition:all .15s; white-space:nowrap; }
+.choice-btn.wide{ flex:1; text-align:center; justify-content:center; }
+.choice-btn.selected{ background:var(--c-orange-50); border-color:var(--c-orange-400); color:var(--c-orange-600); font-weight:500; }
+.choice-btn .ic-inline{ width:13px; height:13px; vertical-align:-2px; margin-right:3px; }
+.type-toggle{ display:flex; gap:8px; }
+.type-toggle .choice-btn{ flex:1; text-align:center; justify-content:center; padding:11px; }
+
+.date-input-wrap{ display:none; margin-top:10px; }
+.date-input-wrap.show{ display:block; }
+.date-input{ width:100%; font-size:15px; padding:11px 14px; border:1.5px solid var(--c-border-2); border-radius:var(--radius-md); background:var(--c-surface-2); }
+.date-input:focus{ outline:none; border-color:var(--c-orange-400); }
+
+.submit-btn{ width:100%; padding:15px; background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); color:white; font-size:15px; font-weight:500; border-radius:var(--radius-md); margin-top:6px; box-shadow:0 4px 14px rgba(242,98,42,0.3); transition:transform .1s; }
+.submit-btn:active{ transform:scale(0.98); }
+.submit-btn:disabled{ opacity:0.5; box-shadow:none; }
+
+.hide{ display:none !important; }
+
+/* ===================== 캐릭터 업로드 모달 ===================== */
+.upload-zone{ border:1.5px dashed var(--c-border-2); border-radius:var(--radius-md); padding:32px 20px; text-align:center; color:var(--c-text-2); font-size:13.5px; cursor:pointer; transition:border-color .15s, background .15s; }
+.upload-zone:hover{ border-color:var(--c-orange-400); background:var(--c-orange-50); }
+.upload-zone .ic{ width:28px; height:28px; margin:0 auto 10px; color:var(--c-orange-400); }
+
+/* ===================== 캘린더 (월간 콤팩트) ===================== */
+.cal-card{ padding:14px; }
+.cal-dow-row{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:3px; margin-bottom:4px; }
+.cal-dow-row span{ font-size:10.5px; color:var(--c-text-3); text-align:center; padding:4px 0; display:block; }
+.cal-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:3px; }
+.cal-cell{
+  background:var(--c-surface-2); border:1px solid transparent; border-radius:9px;
+  padding:4px 3px 5px; min-height:52px; display:flex; flex-direction:column; align-items:center; gap:3px;
+  text-align:center; transition:background .12s;
+}
+.cal-cell:hover{ background:var(--c-orange-50); }
+.cal-cell.today{ background:var(--c-orange-50); border-color:var(--c-orange-300); }
+.cal-cell.empty{ background:transparent; cursor:default; }
+.cal-cell.empty:hover{ background:transparent; }
+.cal-cell-daynum{ font-size:11.5px; color:var(--c-text-2); font-weight:500; }
+.cal-cell.today .cal-cell-daynum{ color:var(--c-orange-600); }
+.cal-cell-items{ display:flex; flex-direction:column; gap:2px; margin-top:1px; width:100%; align-items:center; }
+
+/* 모바일: 점으로만 표시 */
+.cal-item-pill{ display:none; }
+.cal-item-more{ display:none; }
+.cal-dots{ display:flex; gap:2px; flex-wrap:wrap; justify-content:center; }
+.cal-dot{ width:4.5px; height:4.5px; border-radius:50%; background:var(--c-orange-400); flex-shrink:0; }
+.cal-dot.event{ background:#4D6BC9; }
+.cal-dot.done{ opacity:0.35; }
+
+/* 넓은 화면: 텍스트 미리보기로 전환 */
+@media (min-width:560px){
+  .cal-cell{ min-height:88px; padding:7px 6px 8px; align-items:stretch; text-align:left; }
+  .cal-cell-items{ align-items:stretch; }
+  .cal-dots{ display:none; }
+  .cal-item-pill{
+    display:block; font-size:11px; padding:2px 6px; border-radius:5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    background:var(--c-orange-100); color:var(--c-orange-600); line-height:1.5;
+  }
+  .cal-item-pill.event{ background:#E4EAFC; color:#4D6BC9; }
+  .cal-item-pill.done{ opacity:0.5; text-decoration:line-through; }
+  .cal-item-more{ display:block; font-size:10.5px; color:var(--c-text-3); padding:1px 6px; }
+}
+
+/* ===================== 돌아보기 ===================== */
+.recap-section{ margin-bottom:22px; }
+.recap-section:last-child{ margin-bottom:4px; }
+.recap-section-title{ font-size:12.5px; color:var(--c-text-2); font-weight:500; margin-bottom:10px; }
+
+.recap-compare{
+  display:flex; align-items:center; gap:16px;
+  background:var(--c-surface-2); border-radius:var(--radius-md); padding:16px;
+}
+.recap-compare-col{ flex:1; text-align:center; }
+.recap-compare-col .num{ font-size:26px; font-weight:600; line-height:1.2; }
+.recap-compare-col .lbl{ font-size:12px; color:var(--c-text-3); margin-top:2px; }
+.recap-compare-arrow{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  font-size:12px; font-weight:500; color:var(--c-text-3); flex-shrink:0;
+}
+.recap-compare-arrow.up{ color:var(--c-success); }
+.recap-compare-arrow .ic{ width:18px; height:18px; }
+
+.recap-highlight-row{ display:flex; gap:10px; }
+.recap-highlight-card{
+  flex:1; background:var(--c-surface-2); border-radius:var(--radius-md); padding:14px;
+}
+.recap-highlight-card .hicon{
+  width:30px; height:30px; border-radius:50%; background:var(--c-orange-100);
+  display:flex; align-items:center; justify-content:center; margin-bottom:8px;
+}
+.recap-highlight-card .hicon .ic{ width:15px; height:15px; color:var(--c-orange-600); }
+.recap-highlight-card .htitle{ font-size:12px; color:var(--c-text-2); margin-bottom:2px; }
+.recap-highlight-card .hvalue{ font-size:15px; font-weight:600; }
+
+.recap-heatmap-wrap{ background:var(--c-surface-2); border-radius:var(--radius-md); padding:14px; }
+.recap-heatmap-month{ font-size:12px; color:var(--c-text-3); margin-bottom:10px; }
+.recap-heatmap-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; }
+.recap-heatmap-dow{ font-size:9.5px; color:var(--c-text-3); text-align:center; padding-bottom:2px; }
+.recap-heatmap-cell{
+  aspect-ratio:1; border-radius:5px; background:var(--c-orange-50);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9.5px; color:var(--c-text-3);
+}
+.recap-heatmap-cell.empty{ background:transparent; }
+.recap-heatmap-legend{ display:flex; align-items:center; gap:5px; margin-top:10px; font-size:10.5px; color:var(--c-text-3); }
+.recap-heatmap-legend .sq{ width:11px; height:11px; border-radius:3px; }
+
+.recap-empty{ text-align:center; padding:32px 16px; color:var(--c-text-3); font-size:13.5px; }
+
+/* ===================== 설정: 프로젝트 관리 ===================== */
+.project-row{ display:flex; align-items:center; gap:10px; padding:12px; background:var(--c-surface-2); border-radius:var(--radius-md); }
+.project-row .pname{ flex:1; font-size:14px; font-weight:500; background:transparent; border:none; padding:4px 0; }
+.project-row .pname:focus{ outline:none; }
+.weight-control{ display:flex; align-items:center; gap:6px; }
+.weight-btn{ width:24px; height:24px; border-radius:50%; background:var(--c-surface); border:0.5px solid var(--c-border-2); display:flex; align-items:center; justify-content:center; }
+.weight-val{ font-size:12px; color:var(--c-text-2); min-width:28px; text-align:center; }
+.project-delete{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; color:var(--c-text-3); flex-shrink:0; }
+.project-delete:hover{ color:var(--c-danger); }
+.project-delete .ic{ width:15px; height:15px; }
+.add-project-row{ display:flex; gap:8px; margin-top:12px; }
+
+/* ===================== 레벨업 오버레이 ===================== */
+.levelup-overlay{ position:fixed; inset:0; background:rgba(43,34,28,0.5); display:none; align-items:center; justify-content:center; z-index:250; }
+.levelup-overlay.show{ display:flex; }
+.levelup-card{ background:var(--c-surface); border-radius:var(--radius-lg); padding:36px 32px; text-align:center; max-width:300px; box-shadow:0 12px 40px rgba(0,0,0,0.2); animation:popIn .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popIn{ from{ transform:scale(0.8); opacity:0; } to{ transform:scale(1); opacity:1; } }
+.levelup-char{ width:84px; height:84px; margin:0 auto 16px; position:relative; }
+.levelup-title{ font-size:18px; font-weight:500; margin-bottom:6px; }
+.levelup-sub{ font-size:13.5px; color:var(--c-text-2); margin-bottom:20px; }
+.levelup-btn{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); color:white; padding:11px 28px; border-radius:var(--radius-pill); font-size:14px; font-weight:500; }
+
+/* ===================== 집중 타이머 ===================== */
+.focus-bar{
+  background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-lg);
+  padding:14px 16px; margin-bottom:16px; box-shadow:var(--shadow-soft);
+}
+.focus-bar.running{ background:linear-gradient(135deg, var(--c-orange-50), var(--c-surface)); border-color:var(--c-orange-200); }
+.focus-bar-top{ display:flex; align-items:center; gap:12px; }
+.focus-icon-wrap{
+  width:38px; height:38px; border-radius:50%; flex-shrink:0;
+  background:var(--c-orange-50); display:flex; align-items:center; justify-content:center;
+}
+.focus-bar.running .focus-icon-wrap{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); }
+.focus-icon-wrap .ic{ width:18px; height:18px; color:var(--c-orange-500); }
+.focus-bar.running .focus-icon-wrap .ic{ color:white; }
+.focus-info{ flex:1; min-width:0; }
+.focus-label{ font-size:13.5px; font-weight:500; }
+.focus-sub{ font-size:12px; color:var(--c-text-2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.focus-timer{ font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--c-orange-600); }
+.focus-action-btn{
+  font-size:13px; font-weight:500; padding:9px 16px; border-radius:var(--radius-pill);
+  background:var(--c-orange-50); color:var(--c-orange-600); white-space:nowrap; flex-shrink:0;
+}
+.focus-action-btn.stop{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); color:white; }
+.focus-pulse{ width:7px; height:7px; border-radius:50%; background:var(--c-orange-500); flex-shrink:0; animation:pulseDot 1.4s ease-in-out infinite; }
+@keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+
+.focus-gauge-track{
+  height:7px; background:var(--c-orange-50); border-radius:4px; overflow:hidden;
+  margin-top:12px; display:none;
+}
+.focus-bar.running .focus-gauge-track{ display:block; }
+.focus-gauge-fill{
+  height:100%; border-radius:4px; width:0%;
+  background:linear-gradient(90deg, var(--c-orange-300), var(--c-orange-400), var(--c-coral-400));
+  transition:width 1s linear;
+}
+.focus-gauge-fill.no-transition{ transition:none !important; }
+.focus-round-label{ font-size:11px; color:var(--c-text-3); margin-top:6px; display:none; }
+.focus-bar.running .focus-round-label{ display:block; }
+
+/* ===================== 집중 선택 모달 ===================== */
+.focus-pick-row{
+  display:flex; align-items:center; gap:10px;
+  padding:13px 14px; border:1.5px solid var(--c-border-2); border-radius:var(--radius-md);
+  margin-bottom:8px; transition:all .15s;
+}
+.focus-pick-row:active{ background:var(--c-orange-50); }
+.focus-pick-row .ftitle{ flex:1; font-size:14px; }
+.focus-pick-row .ftime{ font-size:12px; color:var(--c-text-3); }
+
+/* ===================== 서브태스크 ===================== */
+.subtask-edit-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+.subtask-edit-row{ display:flex; align-items:center; gap:8px; }
+.subtask-edit-row input{
+  flex:1; font-size:14px; padding:10px 12px;
+  border:1.5px solid var(--c-border-2); border-radius:var(--radius-sm); background:var(--c-surface-2);
+}
+.subtask-edit-row input:focus{ outline:none; border-color:var(--c-orange-400); background:var(--c-surface); }
+.subtask-remove-btn{ width:28px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--c-text-3); }
+.subtask-remove-btn .ic{ width:15px; height:15px; }
+.subtask-add-btn{
+  font-size:13px; color:var(--c-orange-600); padding:8px 4px; display:flex; align-items:center; gap:4px; font-weight:500;
+}
+.subtask-add-btn .ic{ width:14px; height:14px; }
+
+.subtask-progress{ font-size:11.5px; color:var(--c-text-3); margin-left:4px; }
+.subtask-view-list{ margin-top:8px; padding-left:35px; display:flex; flex-direction:column; gap:6px; }
+.subtask-view-row{ display:flex; align-items:center; gap:8px; }
+.subtask-check{ width:17px; height:17px; flex-shrink:0; border-radius:50%; border:1.3px solid var(--c-border-2); display:flex; align-items:center; justify-content:center; }
+.subtask-check.checked{ background:var(--c-orange-300); border-color:transparent; }
+.subtask-check .ic{ width:9px; height:9px; color:white; opacity:0; }
+.subtask-check.checked .ic{ opacity:1; }
+.subtask-view-row span{ font-size:13px; color:var(--c-text-2); }
+.subtask-view-row.done span{ text-decoration:line-through; color:var(--c-text-3); }
+.task-expand-btn{ width:22px; height:22px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--c-text-3); transition:transform .15s; }
+.task-expand-btn.open{ transform:rotate(180deg); }
+.task-expand-btn .ic{ width:14px; height:14px; }
+.task-row-main{ display:flex; align-items:center; gap:12px; width:100%; }
+
+/* ===================== 토스트 ===================== */
+.toast{ position:fixed; bottom:160px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--c-text); color:white; font-size:13.5px; padding:11px 20px; border-radius:var(--radius-pill); opacity:0; pointer-events:none; transition:all .25s; z-index:200; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+@media (min-width:768px){ .toast{ bottom:48px; } }
+
+/* ===================== 로딩 ===================== */
+.loading-screen{ position:fixed; inset:0; background:var(--c-bg); display:flex; align-items:center; justify-content:center; z-index:300; flex-direction:column; gap:12px; }
+.loading-screen.hide{ display:none; }
+.spinner{ width:28px; height:28px; border-radius:50%; border:2.5px solid var(--c-orange-100); border-top-color:var(--c-orange-400); animation:spin .7s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.loading-screen p{ font-size:13px; color:var(--c-text-2); }
+</style>
+</head>
+<body>
+
+<div class="bg-wash"></div>
+
+<div id="app">
+  <div class="shell">
+
+    <!-- ===== 데스크톱 사이드바 ===== -->
+    <nav class="sidebar">
+      <div class="brand"><span class="dot"></span>오늘부터, 하나씩</div>
+      <button class="nav-item active" data-page="today" onclick="goPage('today')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        오늘
+      </button>
+      <button class="nav-item" data-page="calendar" onclick="goPage('calendar')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+        캘린더
+      </button>
+      <button class="nav-item" data-page="recap" onclick="goPage('recap')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+        돌아보기
+      </button>
+      <button class="nav-item" data-page="settings" onclick="goPage('settings')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+        설정
+      </button>
+    </nav>
+
+    <!-- ===== 메인 영역 ===== -->
+    <main class="main">
+
+      <!-- ---------- 오늘(7일 뷰) 페이지 ---------- -->
+      <section class="page active" id="page-today">
+
+        <div class="hero-card">
+          <div class="hero-top">
+            <div class="char-stage" id="charStage">
+              <div class="char-wrap empty" id="charWrap" onclick="openCharModal()">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+              </div>
+              <button class="char-upload-btn" onclick="event.stopPropagation(); openCharModal()">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <div id="decorLayer"></div>
+            </div>
+            <div style="flex:1;">
+              <p class="hero-greet" id="greetText">오늘도 같이 하나씩 해볼까요</p>
+              <p class="hero-sub" id="greetSub">이번 주 0개 완료</p>
+              <div class="level-row">
+                <span class="level-badge" id="levelBadge">Lv.1</span>
+                <div class="level-progress-track"><div class="level-progress-fill" id="levelProgressFill" style="width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-box" onclick="openStatsModal()">
+              <p class="num" id="statWeek">0개</p>
+              <p class="lbl">이번 주 완료</p>
+            </div>
+            <div class="stat-box" onclick="openStatsModal()">
+              <p class="num" id="statStreak">0일</p>
+              <p class="lbl"><span class="fire" id="streakFire"></span> 연속 기록</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="section-label" style="margin-bottom:8px;">최근 4주 추이</p>
+            <div class="bars" id="trendBars"></div>
+          </div>
+        </div>
+
+        <div class="focus-bar" id="focusBar">
+          <div class="focus-bar-top" onclick="onFocusBarClick()">
+            <div class="focus-icon-wrap">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </div>
+            <div class="focus-info">
+              <p class="focus-label" id="focusLabel">집중 시작</p>
+              <p class="focus-sub" id="focusSub">어떤 일에 집중할지 골라보세요</p>
+            </div>
+            <span class="focus-timer hide" id="focusTimerText">00:00</span>
+            <button class="focus-action-btn" id="focusActionBtn" onclick="event.stopPropagation(); onFocusBarClick()">시작</button>
+          </div>
+          <div class="focus-gauge-track">
+            <div class="focus-gauge-fill" id="focusGaugeFill"></div>
+          </div>
+          <p class="focus-round-label" id="focusRoundLabel"></p>
+        </div>
+
+        <div id="missedSection" class="hide">
+          <div class="section-label" style="color:var(--c-text-2);">놓친 일</div>
+          <div id="missedList" class="task-list" style="margin-bottom:20px;"></div>
+        </div>
+
+        <div class="section-label with-action">
+          <span>앞으로 7일</span>
+          <span id="weekTotalCount" style="color:var(--c-text-3);"></span>
+        </div>
+        <div id="weekView"></div>
+      </section>
+
+      <!-- ---------- 캘린더 페이지 ---------- -->
+      <section class="page wide" id="page-calendar">
+        <div class="card cal-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button onclick="shiftMonth(-1)" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);">
+                <svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <p style="font-size:15px;font-weight:500;" id="calMonthLabel">2026년 6월</p>
+              <button onclick="shiftMonth(1)" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);">
+                <svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <button onclick="openTaskModal()" style="font-size:12.5px; padding:7px 13px; border:1px solid var(--c-border-2); border-radius:var(--radius-pill); color:var(--c-orange-600); display:flex; align-items:center; gap:4px;">
+              <svg class="ic" style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              등록
+            </button>
+          </div>
+          <div id="calDowRow" class="cal-dow-row"></div>
+          <div id="calGrid" class="cal-grid"></div>
+        </div>
+      </section>
+
+      <!-- ---------- 돌아보기 페이지 ---------- -->
+      <section class="page" id="page-recap">
+        <div id="recapPageBody"></div>
+      </section>
+
+      <!-- ---------- 설정 페이지 ---------- -->
+      <section class="page" id="page-settings">
+        <p class="section-label">캐릭터</p>
+        <div class="card" style="margin-bottom:16px; display:flex; align-items:center; gap:14px;">
+          <div class="char-wrap empty" id="charWrapSettings">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+          </div>
+          <div style="flex:1;">
+            <p style="font-size:14px; font-weight:500; margin-bottom:2px;">캐릭터 이미지</p>
+            <p style="font-size:12.5px; color:var(--c-text-2);">완료 화면에 보여줄 이미지를 올려보세요</p>
+          </div>
+          <button onclick="openCharModal()" style="font-size:13px; padding:8px 14px; border:1px solid var(--c-border-2); border-radius:var(--radius-pill); color:var(--c-text-2);">변경</button>
+        </div>
+
+        <p class="section-label with-action">
+          <span>프로젝트 영역</span>
+          <span style="color:var(--c-text-3); font-weight:400;">가중치가 높을수록 우선순위가 올라가요</span>
+        </p>
+        <div class="card" style="margin-bottom:16px;">
+          <div id="projectManageList" style="display:flex; flex-direction:column; gap:8px;"></div>
+          <div class="add-project-row">
+            <input type="text" id="newProjectInput" placeholder="새 프로젝트 이름" class="title-input" style="font-size:14px; padding:10px 12px;">
+            <button onclick="addProject()" style="background:var(--c-orange-50); color:var(--c-orange-600); padding:0 16px; border-radius:var(--radius-md); font-size:13px; font-weight:500; white-space:nowrap;">추가</button>
+          </div>
+        </div>
+
+        <p class="section-label">성장 기록</p>
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:14px;">현재 레벨</p>
+            <p style="font-size:14px; font-weight:500;" id="settingsLevelText">Lv.1</p>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:14px;">누적 완료</p>
+            <p style="font-size:14px; font-weight:500;" id="settingsTotalDone">0개</p>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:14px;">누적 집중시간</p>
+            <p style="font-size:14px; font-weight:500;" id="settingsTotalFocus">0분</p>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <p style="font-size:14px;">총 포인트</p>
+            <p style="font-size:14px; font-weight:500; color:var(--c-orange-600);" id="settingsTotalPoints">0P</p>
+          </div>
+          <p style="font-size:11.5px; color:var(--c-text-3); margin-top:12px; line-height:1.5;">완료 1개 = 10포인트 · 집중 10분 = 1포인트 · 50포인트마다 레벨업</p>
+        </div>
+
+        <p class="section-label">데이터</p>
+        <div class="card">
+          <p style="font-size:13px; color:var(--c-text-2); line-height:1.6;">모든 데이터는 Firebase에 자동 저장되며, 기기 간 동기화돼요.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== 모바일 하단 탭바 ===== -->
+  <nav class="tabbar">
+    <button class="tab-item active" data-page="today" onclick="goPage('today')">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      오늘
+    </button>
+    <button class="tab-item" data-page="calendar" onclick="goPage('calendar')">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+      캘린더
+    </button>
+    <button class="tab-item" data-page="recap" onclick="goPage('recap')">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+      돌아보기
+    </button>
+    <button class="tab-item" data-page="settings" onclick="goPage('settings')">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+      설정
+    </button>
+  </nav>
+
+  <button class="fab" id="mainFab" onclick="openTaskModal()">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- ===================== 등록 모달 ===================== -->
+<div class="modal-overlay" id="taskModalOverlay" onclick="closeTaskModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <p class="modal-title" id="taskModalTitle">새로 등록하기</p>
+      <button class="modal-close" onclick="closeTaskModal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="field-group">
+      <input type="text" class="title-input" id="taskTitleInput" placeholder="제목만 적어주세요 (예: 사이사이 참고문헌)">
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">유형</p>
+      <div class="type-toggle">
+        <button class="choice-btn selected" id="typeTaskBtn" onclick="setType('task')">할 일</button>
+        <button class="choice-btn" id="typeEventBtn" onclick="setType('event')">일정 (미팅·약속)</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label" id="dateFieldLabel">언제까지</p>
+      <div class="choice-row" id="dateChips"></div>
+      <div class="date-input-wrap" id="customDateWrap">
+        <input type="date" class="date-input" id="customDateInput" onchange="onCustomDateChange()">
+      </div>
+    </div>
+
+    <div class="field-group" id="timeFieldGroup">
+      <p class="field-label">시간 (선택)</p>
+      <input type="time" class="date-input" id="eventTimeInput">
+    </div>
+
+    <div class="field-group" id="projectFieldGroup">
+      <p class="field-label">프로젝트</p>
+      <div class="choice-row" id="projectChips"></div>
+    </div>
+
+    <div class="field-group" id="durationFieldGroup">
+      <p class="field-label">얼마나 걸릴까요</p>
+      <div class="type-toggle">
+        <button class="choice-btn wide" data-duration="light" onclick="selectDuration(this,'light')">조금</button>
+        <button class="choice-btn wide selected" data-duration="medium" onclick="selectDuration(this,'medium')">보통</button>
+        <button class="choice-btn wide" data-duration="heavy" onclick="selectDuration(this,'heavy')">많이</button>
+      </div>
+    </div>
+
+    <div class="field-group" id="subtaskFieldGroup">
+      <p class="field-label">하위 항목 (선택)</p>
+      <div class="subtask-edit-list" id="subtaskEditList"></div>
+      <button class="subtask-add-btn" onclick="addSubtaskField()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        하위 항목 추가
+      </button>
+    </div>
+
+    <button class="submit-btn" id="submitTaskBtn" onclick="submitTask()" disabled>등록 끝 — 우선순위는 알아서 계산할게요</button>
+  </div>
+</div>
+
+<!-- ===================== 캐릭터 업로드 모달 ===================== -->
+<div class="modal-overlay" id="charModalOverlay" onclick="closeCharModalOnOverlay(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <p class="modal-title">캐릭터 이미지</p>
+      <button class="modal-close" onclick="closeCharModal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <label class="upload-zone" for="charFileInput" id="uploadZone">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0L7 9m5-5l5 5M5 16v2a2 2 0 002 2h10a2 2 0 002-2v-2"/></svg>
+      <p>탭해서 PC에서 이미지를 선택해주세요</p>
+      <p style="font-size:11.5px; margin-top:4px; color:var(--c-text-3);">JPG · PNG, 정사각형 이미지 권장</p>
+    </label>
+    <input type="file" id="charFileInput" accept="image/*" style="display:none;" onchange="onCharFileSelected(event)">
+  </div>
+</div>
+
+<!-- ===================== 집중 항목 선택 모달 ===================== -->
+<div class="modal-overlay" id="focusPickOverlay" onclick="closeFocusPickOnOverlay(event)">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <p class="modal-title">무엇에 집중할까요</p>
+      <button class="modal-close" onclick="closeFocusPickModal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="focusPickList"></div>
+  </div>
+</div>
+
+<!-- ===================== 캘린더 날짜 상세 모달 ===================== -->
+<div class="modal-overlay" id="dayDetailOverlay" onclick="closeDayDetailOnOverlay(event)">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-head">
+      <p class="modal-title" id="dayDetailTitle">날짜</p>
+      <button class="modal-close" onclick="closeDayDetailModal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="task-list" id="dayDetailList"></div>
+    <button class="submit-btn" style="margin-top:16px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="closeDayDetailModal(); openTaskModal();">
+      <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      새로 등록하기
+    </button>
+  </div>
+</div>
+
+<!-- ===================== 레벨업 오버레이 ===================== -->
+<div class="levelup-overlay" id="levelupOverlay">
+  <div class="levelup-card">
+    <div class="levelup-char" id="levelupCharStage">
+      <div class="char-wrap" id="levelupCharWrap" style="width:84px;height:84px;"></div>
+    </div>
+    <p class="levelup-title" id="levelupTitle">레벨 2가 됐어요</p>
+    <p class="levelup-sub" id="levelupSub">소품이 하나 늘었어요</p>
+    <button class="levelup-btn" onclick="closeLevelup()">좋아요</button>
+  </div>
+</div>
+
+<!-- ===================== 토스트 ===================== -->
+<div class="toast" id="toast">
+  <svg class="ic" style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>
+  <span id="toastText">등록했어요</span>
+</div>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <p>불러오는 중</p>
+</div>
+
+<script>
+/* =========================================================================
+   Firebase 설정
+   ========================================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDl3XXNmCZ3f6lrhLAXG-fqFWExmAC_W0c",
+  authDomain: "rise-test-e863d.firebaseapp.com",
+  projectId: "rise-test-e863d",
+  storageBucket: "rise-test-e863d.firebasestorage.app",
+  messagingSenderId: "732923145383",
+  appId: "1:732923145383:web:b83287a131863e879f7f82"
+};
+
+let db = null;
+let storage = null;
+let firebaseReady = false;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  storage = firebase.storage();
+  firebaseReady = true;
+} catch (e) {
+  console.warn("Firebase 초기화 실패 — 설정값을 확인해주세요.", e);
+}
+
+/* =========================================================================
+   기본 데이터
+   ========================================================================= */
+const DEFAULT_PROJECTS = [
+  { id: "research", name: "연구·논문", weight: 1.4 },
+  { id: "edit",      name: "편집팀",   weight: 1.0 },
+  { id: "addier",    name: "ADDI+er", weight: 1.0 },
+  { id: "seminar",   name: "세미나",   weight: 1.1 },
+  { id: "personal",  name: "개인",     weight: 0.9 }
+];
+
+const LEVEL_STEP = 5; // 완료 5개마다 레벨업 (구버전 호환용, 포인트제로 대체)
+const POINT_PER_COMPLETE = 10;   // 할 일 완료 1개 = 10포인트
+const POINT_PER_10MIN = 1;       // 집중 10분 = 1포인트
+const POINTS_PER_LEVEL = 50;     // 50포인트마다 레벨업
+
+let state = {
+  tasks: [],
+  projects: [...DEFAULT_PROJECTS],
+  charImageUrl: null,
+  selectedType: 'task',
+  selectedDate: null,
+  selectedDuration: 'medium',
+  selectedProjectId: DEFAULT_PROJECTS[0].id,
+  calCursor: new Date(),
+  calSelectedDate: null,
+  lastSeenLevel: 1,
+  subtaskDraft: [],           // 등록 모달에서 임시로 입력 중인 하위 항목들
+  focusSession: null,         // { taskId, startedAt } 진행중인 집중 세션
+  expandedTaskIds: []         // 7일뷰/캘린더에서 펼쳐진 task id 목록
+};
+
+const STORAGE_KEY = "schedule_app_local_v2";
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state.tasks = parsed.tasks || [];
+      state.projects = parsed.projects || [...DEFAULT_PROJECTS];
+      state.charImageUrl = parsed.charImageUrl || null;
+      state.lastSeenLevel = parsed.lastSeenLevel || 1;
+      state.focusSession = parsed.focusSession || null;
+    }
+  }catch(e){ console.warn(e); }
+}
+function saveLocal(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    tasks: state.tasks,
+    projects: state.projects,
+    charImageUrl: state.charImageUrl,
+    lastSeenLevel: state.lastSeenLevel,
+    focusSession: state.focusSession
+  }));
+}
+
+/* =========================================================================
+   날짜 유틸
+   ========================================================================= */
+function fmtDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayStr(){ return fmtDate(new Date()); }
+function addDays(dateStr, n){
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate()+n);
+  return fmtDate(d);
+}
+function dDayLabel(dateStr){
+  const today = new Date(todayStr()+"T00:00:00");
+  const target = new Date(dateStr+"T00:00:00");
+  const diff = Math.round((target-today)/86400000);
+  if(diff === 0) return "오늘";
+  if(diff < 0) return `D+${Math.abs(diff)}`;
+  return `D-${diff}`;
+}
+const DOW = ['일','월','화','수','목','금','토'];
+
+/* =========================================================================
+   우선순위 계산
+   ========================================================================= */
+const DURATION_WEIGHT = { light: 1.0, medium: 1.3, heavy: 1.7 };
+
+function priorityScore(task){
+  if(task.type === 'event') return 9999;
+  const today = new Date(todayStr()+"T00:00:00");
+  const target = new Date(task.date+"T00:00:00");
+  const rawDaysLeft = (target-today)/86400000 + 1;
+  const daysLeft = Math.max(0.5, rawDaysLeft);
+  const urgency = 10 / daysLeft;
+  const durW = DURATION_WEIGHT[task.duration] || 1.0;
+  const proj = state.projects.find(p=>p.id===task.projectId);
+  const projW = proj ? proj.weight : 1.0;
+  // 놓친 일(과거 날짜)은 항상 가장 위로: 며칠 지났는지만큼 추가 가중
+  const missedBoost = rawDaysLeft < 0.5 ? (100 + Math.abs(rawDaysLeft)) : 1;
+  return urgency * durW * projW * missedBoost;
+}
+
+/* =========================================================================
+   페이지 전환
+   ========================================================================= */
+function goPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item, .tab-item').forEach(b=>{
+    b.classList.toggle('active', b.dataset.page === name);
+  });
+  if(name === 'calendar') renderCalendar();
+  if(name === 'settings') renderSettingsPage();
+  if(name === 'recap') renderRecapPage();
+}
+
+/* =========================================================================
+   렌더링 — 7일 뷰
+   ========================================================================= */
+function renderMissedSection(){
+  const today = todayStr();
+  const missed = state.tasks.filter(t => t.type==='task' && !t.done && t.date < today);
+  missed.sort((a,b)=> a.date.localeCompare(b.date)); // 오래된 것부터
+
+  const section = document.getElementById('missedSection');
+  const list = document.getElementById('missedList');
+
+  if(missed.length === 0){
+    section.classList.add('hide');
+    list.innerHTML = '';
+    return;
+  }
+  section.classList.remove('hide');
+  list.innerHTML = missed.map(t => taskRowHtml(t, '', true)).join('');
+}
+
+function renderWeekView(){
+  renderMissedSection();
+  const container = document.getElementById('weekView');
+  const today = todayStr();
+  let html = '';
+  let totalCount = 0;
+
+  for(let i=0;i<7;i++){
+    const dateStr = addDays(today, i);
+    const d = new Date(dateStr+"T00:00:00");
+    const dayTasks = state.tasks.filter(t=>t.date===dateStr);
+    dayTasks.sort((a,b)=> priorityScore(b)-priorityScore(a));
+    totalCount += dayTasks.length;
+
+    const isToday = i===0;
+    const dowLabel = DOW[d.getDay()];
+    const dateLabel = `${d.getMonth()+1}.${d.getDate()}`;
+    const farClass = i>=3 ? 'far' : '';
+
+    let bodyHtml = '';
+    if(dayTasks.length === 0){
+      bodyHtml = `<p style="font-size:12.5px; color:var(--c-text-3); padding:4px 2px 2px;">비어있어요</p>`;
+    } else {
+      bodyHtml = `<div class="task-list">` + dayTasks.map(t=>taskRowHtml(t, farClass)).join('') + `</div>`;
+    }
+
+    html += `
+      <div class="day-group">
+        <div class="day-head">
+          <span class="day-name ${isToday?'':''}">${dowLabel}요일</span>
+          <span class="day-date">${dateLabel}</span>
+          ${isToday ? '<span class="today-pill">오늘</span>' : ''}
+          ${dayTasks.length>0 ? `<span class="count-pill">${dayTasks.length}개</span>` : ''}
+        </div>
+        ${bodyHtml}
+      </div>`;
+  }
+
+  document.getElementById('weekTotalCount').textContent = totalCount > 0 ? `총 ${totalCount}개` : '';
+
+  if(totalCount === 0){
+    container.innerHTML = `
+      <div class="empty-week">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <p>앞으로 7일, 아직 등록된 일이 없어요</p>
+      </div>`;
+  } else {
+    container.innerHTML = html;
+  }
+
+  renderHero();
+}
+
+function taskRowHtml(t, extraClass, showMissedDate){
+  const proj = state.projects.find(p=>p.id===t.projectId);
+  const projName = proj ? proj.name : '';
+  const chipClass = t.type === 'event' ? 'chip event' : 'chip';
+  const chipLabel = t.type === 'event' ? '일정' : (projName || '할 일');
+
+  const subtasks = t.subtasks || [];
+  const hasSubtasks = subtasks.length > 0;
+  const doneSubCount = subtasks.filter(s=>s.done).length;
+  const isExpanded = state.expandedTaskIds.includes(t.id);
+  const focusSeconds = t.focusSeconds || 0;
+
+  const expandBtnHtml = hasSubtasks ? `
+      <button class="task-expand-btn ${isExpanded?'open':''}" onclick="event.stopPropagation(); toggleExpand('${t.id}')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>` : '';
+
+  const subtaskListHtml = (hasSubtasks && isExpanded) ? `
+    <div class="subtask-view-list">
+      ${subtasks.map(s=>`
+        <div class="subtask-view-row ${s.done?'done':''}">
+          <button class="subtask-check ${s.done?'checked':''}" onclick="toggleSubtask('${t.id}','${s.id}')">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+          </button>
+          <span>${escapeHtml(s.title)}</span>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  const focusLabel = focusSeconds > 0 ? `<span style="color:var(--c-text-3);">· ${formatDuration(focusSeconds)}</span>` : '';
+
+  let dateMeta;
+  if(t.type === 'event'){
+    dateMeta = t.time ? `<span>${t.time}</span>` : '';
+  } else if(showMissedDate){
+    const d = new Date(t.date+"T00:00:00");
+    dateMeta = `<span>${d.getMonth()+1}.${d.getDate()} 일이었어요</span>`;
+  } else {
+    dateMeta = `<span>${dDayLabel(t.date)}</span>`;
+  }
+
+  return `
+    <div class="task-row ${t.done ? 'done' : ''} ${extraClass||''}" data-id="${t.id}" style="flex-direction:column; align-items:stretch;">
+      <div class="task-row-main">
+        <button class="check-btn ${t.done ? 'checked' : ''}" onclick="toggleDone('${t.id}')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+        </button>
+        <div class="task-body">
+          <p class="task-title">${escapeHtml(t.title)}${hasSubtasks ? `<span class="subtask-progress">${doneSubCount}/${subtasks.length}</span>`:''}</p>
+          <div class="task-meta">
+            <span class="${chipClass}">${chipLabel}</span>
+            ${dateMeta}
+            ${focusLabel}
+          </div>
+        </div>
+        ${expandBtnHtml}
+      </div>
+      ${subtaskListHtml}
+    </div>`;
+}
+
+function toggleExpand(taskId){
+  const idx = state.expandedTaskIds.indexOf(taskId);
+  if(idx >= 0) state.expandedTaskIds.splice(idx,1);
+  else state.expandedTaskIds.push(taskId);
+  renderWeekView();
+  refreshDayDetailIfOpen();
+}
+
+function toggleSubtask(taskId, subId){
+  const t = state.tasks.find(x=>x.id===taskId);
+  if(!t || !t.subtasks) return;
+  const s = t.subtasks.find(x=>x.id===subId);
+  if(!s) return;
+  s.done = !s.done;
+  persistTask(t);
+  saveLocal();
+  renderWeekView();
+  refreshDayDetailIfOpen();
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* =========================================================================
+   레벨 / 소품 시스템
+   ========================================================================= */
+function getTotalDone(){
+  return state.tasks.filter(t=>t.done).length;
+}
+function getTotalFocusSeconds(){
+  return state.tasks.reduce((sum,t)=> sum + (t.focusSeconds||0), 0);
+}
+function getTotalPoints(){
+  const donePoints = getTotalDone() * POINT_PER_COMPLETE;
+  const focusMinutes = getTotalFocusSeconds() / 60;
+  const focusPoints = Math.floor(focusMinutes / 10) * POINT_PER_10MIN;
+  return donePoints + focusPoints;
+}
+function getLevel(points){
+  return Math.floor(points / POINTS_PER_LEVEL) + 1;
+}
+function getLevelProgress(points){
+  const inLevel = points % POINTS_PER_LEVEL;
+  return Math.round((inLevel / POINTS_PER_LEVEL) * 100);
+}
+
+// 레벨별 소품: 간단한 SVG를 캐릭터 주변 정해진 위치에 배치
+const DECOR_SLOTS = [
+  { level:2, pos:{top:'-6px', left:'-6px'}, svg:'star' },
+  { level:3, pos:{top:'-8px', right:'-8px'}, svg:'leaf' },
+  { level:4, pos:{bottom:'-6px', left:'-8px'}, svg:'badge' },
+  { level:5, pos:{top:'2px', left:'-12px'}, svg:'flower' },
+  { level:6, pos:{bottom:'-8px', right:'-6px'}, svg:'pot' },
+  { level:7, pos:{top:'-10px', left:'18px'}, svg:'sparkle' }
+];
+const DECOR_SVG = {
+  star: `<svg viewBox="0 0 24 24" fill="#FFC93C" stroke="#E8A317" stroke-width="1"><path d="M12 2l2.6 7.2H22l-6 4.6L18.5 22 12 17.3 5.5 22 8 13.8l-6-4.6h7.4z"/></svg>`,
+  leaf: `<svg viewBox="0 0 24 24" fill="#7CB87C" stroke="#5A9A5A" stroke-width="0.8"><path d="M4 20c8 0 16-6 16-16-10 0-16 6-16 16z"/></svg>`,
+  badge: `<svg viewBox="0 0 24 24" fill="#FF9D6C" stroke="#E87A3D" stroke-width="0.8"><circle cx="12" cy="9" r="6"/><path d="M9 14l-2 7 5-3 5 3-2-7"/></svg>`,
+  flower: `<svg viewBox="0 0 24 24" fill="#FF8FB3" stroke="#E0608C" stroke-width="0.6"><circle cx="12" cy="6" r="3"/><circle cx="17" cy="11" r="3"/><circle cx="15" cy="17" r="3"/><circle cx="9" cy="17" r="3"/><circle cx="7" cy="11" r="3"/><circle cx="12" cy="12" r="2.5" fill="#FFD93C"/></svg>`,
+  pot: `<svg viewBox="0 0 24 24" fill="#D9824A" stroke="#B5652F" stroke-width="0.8"><path d="M6 10h12l-1.5 9a2 2 0 01-2 1.7h-5a2 2 0 01-2-1.7z"/><rect x="5" y="7" width="14" height="3" rx="1"/></svg>`,
+  sparkle: `<svg viewBox="0 0 24 24" fill="#FFD93C"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z"/></svg>`
+};
+
+function renderDecor(){
+  const level = getLevel(getTotalPoints());
+  const layer = document.getElementById('decorLayer');
+  let html = '';
+  DECOR_SLOTS.forEach(slot=>{
+    if(level >= slot.level){
+      const posStyle = Object.entries(slot.pos).map(([k,v])=>`${k}:${v}`).join(';');
+      html += `<div class="decor" style="${posStyle}; width:20px; height:20px;">${DECOR_SVG[slot.svg]}</div>`;
+    }
+  });
+  layer.innerHTML = html;
+}
+
+function checkLevelUp(){
+  const points = getTotalPoints();
+  const newLevel = getLevel(points);
+  if(newLevel > state.lastSeenLevel){
+    showLevelup(newLevel);
+    state.lastSeenLevel = newLevel;
+    saveLocal();
+  }
+}
+
+function showLevelup(level){
+  document.getElementById('levelupTitle').textContent = `레벨 ${level}이 됐어요`;
+  const slot = DECOR_SLOTS.find(s=>s.level===level);
+  document.getElementById('levelupSub').textContent = slot ? '소품이 하나 늘었어요' : '계속 잘 해내고 있어요';
+
+  // 레벨업 카드 안에 캐릭터 + 현재까지의 소품 미리 보여주기
+  const wrap = document.getElementById('levelupCharWrap');
+  wrap.innerHTML = state.charImageUrl
+    ? `<img src="${state.charImageUrl}" alt="캐릭터" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:36px;height:36px;color:white;"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>`;
+
+  const stage = document.getElementById('levelupCharStage');
+  stage.querySelectorAll('.decor').forEach(d=>d.remove());
+  DECOR_SLOTS.forEach(s=>{
+    if(level >= s.level){
+      const posStyle = Object.entries(s.pos).map(([k,v])=>`${k}:${v}`).join(';');
+      const el = document.createElement('div');
+      el.className = 'decor';
+      el.style.cssText = posStyle + ';width:22px;height:22px;';
+      el.innerHTML = DECOR_SVG[s.svg];
+      stage.appendChild(el);
+    }
+  });
+
+  document.getElementById('levelupOverlay').classList.add('show');
+}
+function closeLevelup(){
+  document.getElementById('levelupOverlay').classList.remove('show');
+  renderDecor();
+}
+
+/* =========================================================================
+   히어로 영역 렌더링
+   ========================================================================= */
+function renderHero(){
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((dayOfWeek+6)%7));
+  monday.setHours(0,0,0,0);
+
+  const doneThisWeek = state.tasks.filter(t=>{
+    if(!t.done || !t.doneAt) return false;
+    const d = new Date(t.doneAt);
+    return d >= monday;
+  }).length;
+
+  document.getElementById('statWeek').textContent = `${doneThisWeek}개`;
+  document.getElementById('greetSub').textContent = `이번 주 ${doneThisWeek}개 완료`;
+
+  let streak = 0;
+  let cursor = new Date();
+  cursor.setHours(0,0,0,0);
+  while(true){
+    const dStr = fmtDate(cursor);
+    const hasDone = state.tasks.some(t=> t.done && t.doneAt && fmtDate(new Date(t.doneAt)) === dStr);
+    if(hasDone){ streak++; cursor.setDate(cursor.getDate()-1); }
+    else break;
+  }
+  document.getElementById('statStreak').textContent = `${streak}일`;
+  document.getElementById('streakFire').textContent = streak >= 3 ? ' 🔥' : '';
+
+  const bars = [];
+  for(let w=3; w>=0; w--){
+    const start = new Date();
+    start.setDate(start.getDate() - (w*7+6));
+    start.setHours(0,0,0,0);
+    const end = new Date();
+    end.setDate(end.getDate() - (w*7));
+    end.setHours(23,59,59,999);
+    const count = state.tasks.filter(t=>{
+      if(!t.done || !t.doneAt) return false;
+      const d = new Date(t.doneAt);
+      return d >= start && d <= end;
+    }).length;
+    bars.push(count);
+  }
+  const maxBar = Math.max(1, ...bars);
+  const barsHtml = bars.map((c,i)=>{
+    const h = Math.max(10, Math.round((c/maxBar)*100));
+    const isLast = i === bars.length-1;
+    return `<div class="bar ${isLast?'today':''}" style="height:${h}%;" title="${c}개"></div>`;
+  }).join('');
+  document.getElementById('trendBars').innerHTML = barsHtml;
+
+  // 레벨 표시
+  const points = getTotalPoints();
+  const level = getLevel(points);
+  const progress = getLevelProgress(points);
+  document.getElementById('levelBadge').textContent = `Lv.${level}`;
+  document.getElementById('levelProgressFill').style.width = progress + '%';
+
+  renderDecor();
+
+  const greetMsgs = [
+    "오늘도 같이 하나씩 해볼까요",
+    "천천히, 하나씩 가봐요",
+    "할 수 있는 만큼만 해도 충분해요"
+  ];
+  document.getElementById('greetText').textContent = greetMsgs[new Date().getDate() % greetMsgs.length];
+}
+
+function toggleDone(id){
+  const t = state.tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  t.doneAt = t.done ? new Date().toISOString() : null;
+  persistTask(t);
+  saveLocal();
+  renderWeekView();
+  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  refreshDayDetailIfOpen();
+
+  if(t.done){
+    showToast("완료했어요");
+    checkLevelUp();
+  }
+}
+
+/* =========================================================================
+   집중 타이머 (출퇴근식 — 시작/종료 여러 번 반복 가능, 누적)
+   ========================================================================= */
+let focusTickInterval = null;
+
+function onFocusBarClick(){
+  if(state.focusSession){
+    stopFocus();
+  } else {
+    openFocusPickModal();
+  }
+}
+
+function openFocusPickModal(){
+  const today = todayStr();
+  // 놓친 일(과거) + 앞으로의 할 일 모두 후보로, 미완료만
+  const candidates = state.tasks.filter(t=>{
+    return t.type === 'task' && !t.done;
+  }).sort((a,b)=> priorityScore(b)-priorityScore(a));
+
+  const container = document.getElementById('focusPickList');
+  if(candidates.length === 0){
+    container.innerHTML = `<div class="empty-state"><p>아직 등록된 할 일이 없어요.<br>먼저 할 일을 등록해주세요.</p></div>`;
+  } else {
+    container.innerHTML = candidates.map(t=>{
+      const proj = state.projects.find(p=>p.id===t.projectId);
+      const accumulated = t.focusSeconds || 0;
+      const isMissed = t.date < today;
+      let metaLabel;
+      if(isMissed){
+        const d = new Date(t.date+"T00:00:00");
+        metaLabel = `${d.getMonth()+1}.${d.getDate()} 일이었어요`;
+      } else {
+        metaLabel = accumulated > 0 ? `누적 ${formatDuration(accumulated)}` : '';
+      }
+      return `
+        <button class="focus-pick-row" onclick="startFocus('${t.id}')" style="width:100%; text-align:left; background:var(--c-surface);">
+          <span class="ftitle">${escapeHtml(t.title)}</span>
+          <span class="ftime" style="${isMissed?'color:var(--c-orange-600);':''}">${metaLabel}</span>
+        </button>`;
+    }).join('');
+  }
+  document.getElementById('focusPickOverlay').classList.add('open');
+}
+function closeFocusPickModal(){ document.getElementById('focusPickOverlay').classList.remove('open'); }
+function closeFocusPickOnOverlay(e){ if(e.target.id==='focusPickOverlay') closeFocusPickModal(); }
+
+function startFocus(taskId){
+  state.focusSession = { taskId, startedAt: Date.now() };
+  saveLocal();
+  closeFocusPickModal();
+  renderFocusBar();
+  startFocusTicker();
+  showToast("집중 시작했어요");
+}
+
+function stopFocus(){
+  if(!state.focusSession) return;
+  const elapsedSec = Math.round((Date.now() - state.focusSession.startedAt) / 1000);
+  const t = state.tasks.find(x=>x.id===state.focusSession.taskId);
+  if(t && elapsedSec > 0){
+    t.focusSeconds = (t.focusSeconds||0) + elapsedSec;
+    persistTask(t);
+  }
+  state.focusSession = null;
+  saveLocal();
+  stopFocusTicker();
+  renderFocusBar();
+  renderWeekView();
+  if(elapsedSec >= 60){
+    showToast(`${formatDuration(elapsedSec)} 집중했어요`);
+  } else {
+    showToast("집중을 마쳤어요");
+  }
+  checkLevelUp();
+}
+
+function startFocusTicker(){
+  stopFocusTicker();
+  focusTickInterval = setInterval(renderFocusBar, 1000);
+}
+function stopFocusTicker(){
+  if(focusTickInterval){ clearInterval(focusTickInterval); focusTickInterval = null; }
+}
+
+function formatDuration(totalSeconds){
+  const h = Math.floor(totalSeconds/3600);
+  const m = Math.floor((totalSeconds%3600)/60);
+  if(h > 0) return `${h}시간 ${m}분`;
+  if(m > 0) return `${m}분`;
+  return `${totalSeconds}초`;
+}
+function formatTimer(totalSeconds){
+  const m = Math.floor(totalSeconds/60);
+  const s = totalSeconds%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+const GAUGE_CYCLE_SECONDS = 30 * 60; // 게이지 한 바퀴 = 30분
+
+function renderFocusBar(){
+  const bar = document.getElementById('focusBar');
+  const label = document.getElementById('focusLabel');
+  const sub = document.getElementById('focusSub');
+  const timerText = document.getElementById('focusTimerText');
+  const actionBtn = document.getElementById('focusActionBtn');
+  const gaugeFill = document.getElementById('focusGaugeFill');
+  const roundLabel = document.getElementById('focusRoundLabel');
+
+  if(state.focusSession){
+    const t = state.tasks.find(x=>x.id===state.focusSession.taskId);
+    const elapsed = Math.round((Date.now() - state.focusSession.startedAt)/1000);
+    bar.classList.add('running');
+    label.innerHTML = `<span class="focus-pulse" style="display:inline-block; margin-right:5px; vertical-align:middle;"></span>집중 중`;
+    sub.textContent = t ? t.title : '';
+    timerText.textContent = formatTimer(elapsed);
+    timerText.classList.remove('hide');
+    actionBtn.textContent = '종료';
+    actionBtn.classList.add('stop');
+
+    const roundIndex = Math.floor(elapsed / GAUGE_CYCLE_SECONDS); // 몇 바퀴째인지
+    const secInRound = elapsed % GAUGE_CYCLE_SECONDS;
+    const pct = Math.min(100, (secInRound / GAUGE_CYCLE_SECONDS) * 100);
+
+    // 한 바퀴를 막 돌고 새로 시작하는 시점엔 트랜지션 없이 즉시 0%로 리셋 (그래야 거꾸로 줄어드는 것처럼 안 보임)
+    if(secInRound < 1 && elapsed >= GAUGE_CYCLE_SECONDS){
+      gaugeFill.classList.add('no-transition');
+      gaugeFill.style.width = '0%';
+      void gaugeFill.offsetWidth; // reflow
+      gaugeFill.classList.remove('no-transition');
+    }
+    gaugeFill.style.width = pct + '%';
+    roundLabel.textContent = roundIndex > 0 ? `${roundIndex + 1}번째 게이지를 채우는 중` : '게이지를 채우는 중';
+  } else {
+    bar.classList.remove('running');
+    label.textContent = '집중 시작';
+    sub.textContent = '어떤 일에 집중할지 골라보세요';
+    timerText.classList.add('hide');
+    actionBtn.textContent = '시작';
+    actionBtn.classList.remove('stop');
+    gaugeFill.style.width = '0%';
+  }
+}
+
+/* =========================================================================
+   캘린더
+   ========================================================================= */
+function shiftMonth(delta){
+  state.calCursor.setMonth(state.calCursor.getMonth()+delta);
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const cursor = state.calCursor;
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  document.getElementById('calMonthLabel').textContent = `${year}년 ${month+1}월`;
+
+  document.getElementById('calDowRow').innerHTML = DOW.map(d=>`<span>${d}</span>`).join('');
+
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayD = todayStr();
+
+  let html = '';
+  for(let i=0;i<startOffset;i++){ html += `<div class="cal-cell empty"></div>`; }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = fmtDate(new Date(year, month, day));
+    const dayTasks = state.tasks.filter(t=>t.date===dateStr);
+    dayTasks.sort((a,b)=> priorityScore(b)-priorityScore(a));
+    const isToday = dateStr === todayD;
+
+    // 모바일용: 점 (최대 5개)
+    const dotsHtml = dayTasks.length > 0
+      ? `<div class="cal-dots">${dayTasks.slice(0,5).map(t=>{
+          const cls = (t.type==='event' ? 'cal-dot event' : 'cal-dot') + (t.done ? ' done' : '');
+          return `<span class="${cls}"></span>`;
+        }).join('')}</div>`
+      : '';
+
+    // 데스크탑용: 텍스트 미리보기 (최대 3개)
+    const MAX_PREVIEW = 3;
+    const previewTasks = dayTasks.slice(0, MAX_PREVIEW);
+    const moreCount = dayTasks.length - previewTasks.length;
+    const pillsHtml = previewTasks.map(t=>{
+      const cls = t.type === 'event' ? 'cal-item-pill event' : 'cal-item-pill';
+      const doneCls = t.done ? ' done' : '';
+      return `<span class="${cls}${doneCls}">${escapeHtml(t.title)}</span>`;
+    }).join('') + (moreCount > 0 ? `<span class="cal-item-more">+${moreCount}개 더</span>` : '');
+
+    html += `
+      <button class="cal-cell ${isToday?'today':''}" onclick="openDayDetailModal('${dateStr}')">
+        <span class="cal-cell-daynum">${day}</span>
+        <div class="cal-cell-items">${dotsHtml}${pillsHtml}</div>
+      </button>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+/* ---- 날짜 상세 모달 (캘린더 셀 클릭 시) ---- */
+function openDayDetailModal(dateStr){
+  state.calSelectedDate = dateStr;
+  const d = new Date(dateStr+"T00:00:00");
+  document.getElementById('dayDetailTitle').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`;
+
+  const list = state.tasks.filter(t=>t.date===dateStr);
+  list.sort((a,b)=> priorityScore(b)-priorityScore(a));
+
+  const container = document.getElementById('dayDetailList');
+  container.innerHTML = list.length===0
+    ? `<div class="empty-state"><p>이 날은 비어있어요</p></div>`
+    : list.map(t=>taskRowHtml(t,'')).join('');
+
+  document.getElementById('dayDetailOverlay').classList.add('open');
+  document.getElementById('mainFab').classList.add('hide');
+}
+function closeDayDetailModal(){
+  document.getElementById('dayDetailOverlay').classList.remove('open');
+  document.getElementById('mainFab').classList.remove('hide');
+}
+function closeDayDetailOnOverlay(e){ if(e.target.id === 'dayDetailOverlay') closeDayDetailModal(); }
+function refreshDayDetailIfOpen(){
+  if(state.calSelectedDate && document.getElementById('dayDetailOverlay').classList.contains('open')){
+    openDayDetailModal(state.calSelectedDate);
+  }
+}
+
+/* =========================================================================
+   등록 모달
+   ========================================================================= */
+function openTaskModal(){
+  state.selectedType = 'task';
+  state.selectedDate = todayStr();
+  state.selectedDuration = 'medium';
+  state.subtaskDraft = [];
+  if(state.projects.length>0) state.selectedProjectId = state.projects[0].id;
+
+  document.getElementById('taskTitleInput').value = '';
+  document.getElementById('eventTimeInput').value = '';
+  document.getElementById('customDateInput').value = '';
+  document.getElementById('customDateWrap').classList.remove('show');
+
+  setType('task');
+  renderProjectChips();
+  renderSubtaskEditList();
+  renderDateChips();
+
+  document.querySelectorAll('[data-duration]').forEach(b=>b.classList.remove('selected'));
+  document.querySelector('[data-duration="medium"]').classList.add('selected');
+
+  validateSubmit();
+  document.getElementById('taskModalOverlay').classList.add('open');
+  document.getElementById('mainFab').classList.add('hide');
+}
+function closeTaskModal(){
+  document.getElementById('taskModalOverlay').classList.remove('open');
+  document.getElementById('mainFab').classList.remove('hide');
+}
+function closeTaskModalOnOverlay(e){ if(e.target.id === 'taskModalOverlay') closeTaskModal(); }
+
+function setType(type){
+  state.selectedType = type;
+  document.getElementById('typeTaskBtn').classList.toggle('selected', type==='task');
+  document.getElementById('typeEventBtn').classList.toggle('selected', type==='event');
+  document.getElementById('projectFieldGroup').classList.toggle('hide', type==='event');
+  document.getElementById('durationFieldGroup').classList.toggle('hide', type==='event');
+  document.getElementById('subtaskFieldGroup').classList.toggle('hide', type==='event');
+  document.getElementById('timeFieldGroup').classList.toggle('hide', type==='task');
+  document.getElementById('dateFieldLabel').textContent = type==='event' ? '언제' : '언제까지';
+  validateSubmit();
+}
+
+function renderDateChips(){
+  const container = document.getElementById('dateChips');
+  const today = todayStr();
+  let html = '';
+
+  for(let i=0;i<7;i++){
+    const dateStr = addDays(today, i);
+    const d = new Date(dateStr+"T00:00:00");
+    const dowLabel = DOW[d.getDay()];
+    const label = i===0 ? '오늘' : (i===1 ? '내일' : `${dowLabel} ${d.getMonth()+1}.${d.getDate()}`);
+    const isSelected = state.selectedDate === dateStr;
+    html += `<button class="choice-btn ${isSelected?'selected':''}" data-date-value="${dateStr}" onclick="selectDateChip(this, '${dateStr}')">${label}</button>`;
+  }
+  html += `<button class="choice-btn" id="customDateToggleBtn" onclick="toggleCustomDate()">
+      <svg class="ic-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>그 이후
+    </button>`;
+  container.innerHTML = html;
+}
+
+function selectDateChip(btn, dateStr){
+  document.querySelectorAll('#dateChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('customDateWrap').classList.remove('show');
+  state.selectedDate = dateStr;
+  validateSubmit();
+}
+
+function toggleCustomDate(){
+  const wrap = document.getElementById('customDateWrap');
+  wrap.classList.toggle('show');
+  if(wrap.classList.contains('show')){
+    document.querySelectorAll('#dateChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('customDateToggleBtn').classList.add('selected');
+  }
+}
+function onCustomDateChange(){
+  const val = document.getElementById('customDateInput').value;
+  if(val){
+    state.selectedDate = val;
+    document.querySelectorAll('#dateChips .choice-btn[data-date-value]').forEach(b=>{
+      b.classList.toggle('selected', b.dataset.dateValue === val);
+    });
+  }
+  validateSubmit();
+}
+
+function renderProjectChips(){
+  const container = document.getElementById('projectChips');
+  container.innerHTML = state.projects.map(p=>`
+    <button class="choice-btn ${p.id===state.selectedProjectId?'selected':''}" onclick="selectProjectChip(this,'${p.id}')">${escapeHtml(p.name)}</button>
+  `).join('');
+}
+function selectProjectChip(btn, id){
+  state.selectedProjectId = id;
+  document.querySelectorAll('#projectChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectDuration(btn, val){
+  state.selectedDuration = val;
+  document.querySelectorAll('[data-duration]').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+/* ---- 등록 모달 내 하위 항목 입력 ---- */
+function renderSubtaskEditList(){
+  const container = document.getElementById('subtaskEditList');
+  container.innerHTML = state.subtaskDraft.map((val, idx)=>`
+    <div class="subtask-edit-row">
+      <input type="text" value="${escapeHtml(val)}" placeholder="하위 항목 ${idx+1}" oninput="updateSubtaskDraft(${idx}, this.value)">
+      <button class="subtask-remove-btn" onclick="removeSubtaskField(${idx})">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+function addSubtaskField(){
+  state.subtaskDraft.push('');
+  renderSubtaskEditList();
+  const inputs = document.querySelectorAll('#subtaskEditList input');
+  if(inputs.length) inputs[inputs.length-1].focus();
+}
+function updateSubtaskDraft(idx, val){
+  state.subtaskDraft[idx] = val;
+}
+function removeSubtaskField(idx){
+  state.subtaskDraft.splice(idx,1);
+  renderSubtaskEditList();
+}
+
+function validateSubmit(){
+  const title = document.getElementById('taskTitleInput').value.trim();
+  const ok = title.length > 0 && !!state.selectedDate;
+  document.getElementById('submitTaskBtn').disabled = !ok;
+}
+document.getElementById('taskTitleInput').addEventListener('input', validateSubmit);
+
+function submitTask(){
+  const title = document.getElementById('taskTitleInput').value.trim();
+  if(!title || !state.selectedDate) return;
+
+  const subtasks = state.selectedType === 'task'
+    ? state.subtaskDraft
+        .map(s=>s.trim())
+        .filter(s=>s.length>0)
+        .map(s=>({ id: 'sub_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), title:s, done:false }))
+    : [];
+
+  const newTask = {
+    id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    title,
+    type: state.selectedType,
+    date: state.selectedDate,
+    time: state.selectedType==='event' ? (document.getElementById('eventTimeInput').value || null) : null,
+    projectId: state.selectedType==='task' ? state.selectedProjectId : null,
+    duration: state.selectedType==='task' ? state.selectedDuration : null,
+    done: false,
+    doneAt: null,
+    createdAt: new Date().toISOString(),
+    subtasks,
+    focusSeconds: 0
+  };
+
+  state.tasks.push(newTask);
+  saveLocal();
+  persistTask(newTask);
+
+  closeTaskModal();
+  renderWeekView();
+  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  showToast("등록했어요");
+}
+
+/* =========================================================================
+   캐릭터 업로드
+   ========================================================================= */
+function openCharModal(){ document.getElementById('charModalOverlay').classList.add('open'); }
+function closeCharModal(){ document.getElementById('charModalOverlay').classList.remove('open'); }
+function closeCharModalOnOverlay(e){ if(e.target.id === 'charModalOverlay') closeCharModal(); }
+
+function onCharFileSelected(e){
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    state.charImageUrl = ev.target.result;
+    applyCharImage();
+    saveLocal();
+  };
+  reader.readAsDataURL(file);
+
+  if(firebaseReady && storage){
+    const ref = storage.ref().child('schedule_character/main.jpg');
+    ref.put(file).then(()=> ref.getDownloadURL()).then(url=>{
+      state.charImageUrl = url;
+      applyCharImage();
+      saveLocal();
+      if(db) db.collection('schedule_settings').doc('character').set({ imageUrl: url });
+      showToast("캐릭터 이미지를 저장했어요");
+    }).catch(err=>{
+      console.warn("Storage 업로드 실패 (로컬 미리보기만 적용됨):", err);
+      showToast("저장은 못했지만 화면엔 적용했어요");
+    });
+  } else {
+    showToast("화면에 적용했어요 (Firebase 연동 시 영구 저장돼요)");
+  }
+  closeCharModal();
+}
+
+function applyCharImage(){
+  const url = state.charImageUrl;
+  if(!url) return;
+  const wrap = document.getElementById('charWrap');
+  wrap.classList.remove('empty');
+  wrap.innerHTML = `<img src="${url}" alt="캐릭터 이미지">`;
+
+  const wrapSettings = document.getElementById('charWrapSettings');
+  wrapSettings.classList.remove('empty');
+  wrapSettings.innerHTML = `<img src="${url}" alt="캐릭터 이미지">`;
+}
+
+/* =========================================================================
+   설정 페이지 — 프로젝트 CRUD
+   ========================================================================= */
+function renderSettingsPage(){
+  renderProjectManageList();
+  const totalDone = getTotalDone();
+  const totalSeconds = getTotalFocusSeconds();
+  const totalHours = Math.floor(totalSeconds/3600);
+  const totalMins = Math.floor((totalSeconds%3600)/60);
+  const points = getTotalPoints();
+  document.getElementById('settingsLevelText').textContent = `Lv.${getLevel(points)}`;
+  document.getElementById('settingsTotalDone').textContent = `${totalDone}개`;
+  const focusEl = document.getElementById('settingsTotalFocus');
+  if(focusEl) focusEl.textContent = totalHours > 0 ? `${totalHours}시간 ${totalMins}분` : `${totalMins}분`;
+  const pointsEl = document.getElementById('settingsTotalPoints');
+  if(pointsEl) pointsEl.textContent = `${points}P`;
+}
+
+/* =========================================================================
+   돌아보기 (주간 회고 — 설정 페이지에서 진입)
+   ========================================================================= */
+function getMondayOf(date){
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const day = d.getDay();
+  d.setDate(d.getDate() - ((day+6)%7));
+  return d;
+}
+
+function renderRecapPage(){
+  const now = new Date();
+  const thisMonday = getMondayOf(now);
+  const lastMonday = new Date(thisMonday);
+  lastMonday.setDate(lastMonday.getDate()-7);
+  const lastSunday = new Date(thisMonday);
+  lastSunday.setDate(lastSunday.getDate()-1);
+  lastSunday.setHours(23,59,59,999);
+
+  // 직전 7일(오늘 포함하지 않는 '완전히 끝난 한 주' 기준: 지난주 월~일)
+  const doneInRange = (start, end) => state.tasks.filter(t=>{
+    if(!t.done || !t.doneAt) return false;
+    const d = new Date(t.doneAt);
+    return d >= start && d <= end;
+  });
+
+  const lastWeekDone = doneInRange(lastMonday, lastSunday);
+  const thisWeekStart = thisMonday;
+  const thisWeekEnd = new Date(); // 지금까지
+  const thisWeekDone = doneInRange(thisWeekStart, thisWeekEnd);
+
+  const lastCount = lastWeekDone.length;
+  const thisCount = thisWeekDone.length;
+  const diff = thisCount - lastCount;
+
+  let arrowHtml, arrowClass;
+  if(diff > 0){ arrowHtml = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>+${diff}`; arrowClass='up'; }
+  else if(diff < 0){ arrowHtml = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>${diff}`; arrowClass=''; }
+  else { arrowHtml = `<span style="font-size:11px;">동일</span>`; arrowClass=''; }
+
+  // 가장 많이 완료한 프로젝트 (이번 주 기준, 없으면 지난 주 기준)
+  const baseForProject = thisCount > 0 ? thisWeekDone : lastWeekDone;
+  const projCounts = {};
+  baseForProject.forEach(t=>{
+    if(!t.projectId) return;
+    projCounts[t.projectId] = (projCounts[t.projectId]||0) + 1;
+  });
+  let topProjectLabel = '아직 없어요';
+  const projEntries = Object.entries(projCounts).sort((a,b)=>b[1]-a[1]);
+  if(projEntries.length > 0){
+    const proj = state.projects.find(p=>p.id===projEntries[0][0]);
+    topProjectLabel = proj ? `${proj.name} · ${projEntries[0][1]}개` : '–';
+  }
+
+  // 가장 집중 잘 된 요일 (전체 누적 집중시간 기준, focusSeconds는 task별 총합이라
+  // 완료/등록 시점이 아니라 그 task가 속한 날짜(date)를 기준으로 요일 집계)
+  const dowFocus = [0,0,0,0,0,0,0];
+  state.tasks.forEach(t=>{
+    if(!t.focusSeconds) return;
+    const d = new Date(t.date+"T00:00:00");
+    dowFocus[d.getDay()] += t.focusSeconds;
+  });
+  const maxFocusIdx = dowFocus.indexOf(Math.max(...dowFocus));
+  const hasFocusData = dowFocus.some(v=>v>0);
+  const topDowLabel = hasFocusData ? `${DOW[maxFocusIdx]}요일` : '아직 없어요';
+
+  // 이번 달 히트맵
+  const monthLabel = `${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const firstDow = new Date(year, month, 1).getDay();
+
+  const doneCountByDate = {};
+  state.tasks.forEach(t=>{
+    if(!t.done || !t.doneAt) return;
+    const dStr = fmtDate(new Date(t.doneAt));
+    doneCountByDate[dStr] = (doneCountByDate[dStr]||0) + 1;
+  });
+
+  let heatCells = '';
+  for(let i=0;i<firstDow;i++){ heatCells += `<div class="recap-heatmap-cell empty"></div>`; }
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = fmtDate(new Date(year, month, day));
+    const c = doneCountByDate[dateStr] || 0;
+    let bg = 'var(--c-orange-50)';
+    if(c >= 4) bg = 'var(--c-orange-500)';
+    else if(c === 3) bg = 'var(--c-orange-400)';
+    else if(c === 2) bg = 'var(--c-orange-300)';
+    else if(c === 1) bg = 'var(--c-orange-200)';
+    const textColor = c >= 2 ? 'white' : 'var(--c-text-3)';
+    heatCells += `<div class="recap-heatmap-cell" style="background:${bg}; color:${textColor};">${day}</div>`;
+  }
+
+  const hasAnyData = state.tasks.some(t=>t.done);
+
+  const pageHeader = `
+    <div style="margin-bottom:20px;">
+      <p style="font-size:18px; font-weight:500; margin-bottom:4px;">한 주를 돌아볼까요</p>
+      <p style="font-size:13px; color:var(--c-text-2);">완료 추이, 집중 패턴, 이번 달 기록을 모아봤어요</p>
+    </div>`;
+
+  const body = pageHeader + (hasAnyData ? `
+    <div class="recap-section">
+      <p class="recap-section-title">완료 추이</p>
+      <div class="recap-compare">
+        <div class="recap-compare-col">
+          <p class="num">${lastCount}개</p>
+          <p class="lbl">지난주</p>
+        </div>
+        <div class="recap-compare-arrow ${arrowClass}">${arrowHtml}</div>
+        <div class="recap-compare-col">
+          <p class="num">${thisCount}개</p>
+          <p class="lbl">이번주</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-section">
+      <p class="recap-section-title">이번 주 하이라이트</p>
+      <div class="recap-highlight-row">
+        <div class="recap-highlight-card">
+          <div class="hicon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 14l4-4 3 3 5-6"/></svg></div>
+          <p class="htitle">가장 많이 한 일</p>
+          <p class="hvalue">${escapeHtml(topProjectLabel)}</p>
+        </div>
+        <div class="recap-highlight-card">
+          <div class="hicon"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+          <p class="htitle">집중 잘 된 요일</p>
+          <p class="hvalue">${escapeHtml(topDowLabel)}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-section">
+      <p class="recap-section-title">이번 달 기록</p>
+      <div class="recap-heatmap-wrap">
+        <p class="recap-heatmap-month">${monthLabel}</p>
+        <div class="recap-heatmap-grid">
+          ${DOW.map(d=>`<span class="recap-heatmap-dow">${d}</span>`).join('')}
+          ${heatCells}
+        </div>
+        <div class="recap-heatmap-legend">
+          <span>적음</span>
+          <span class="sq" style="background:var(--c-orange-50);"></span>
+          <span class="sq" style="background:var(--c-orange-200);"></span>
+          <span class="sq" style="background:var(--c-orange-300);"></span>
+          <span class="sq" style="background:var(--c-orange-400);"></span>
+          <span class="sq" style="background:var(--c-orange-500);"></span>
+          <span>많음</span>
+        </div>
+      </div>
+    </div>
+  ` : `<div class="recap-empty">아직 쌓인 기록이 없어요.<br>완료한 일들이 여기에 모일 거예요.</div>`);
+
+  document.getElementById('recapPageBody').innerHTML = body;
+}
+
+function renderProjectManageList(){
+  const container = document.getElementById('projectManageList');
+  container.innerHTML = state.projects.map(p=>`
+    <div class="project-row">
+      <input class="pname" value="${escapeHtml(p.name)}" onchange="renameProject('${p.id}', this.value)">
+      <div class="weight-control">
+        <button class="weight-btn" onclick="adjustWeight('${p.id}', -0.1)">−</button>
+        <span class="weight-val">${p.weight.toFixed(1)}</span>
+        <button class="weight-btn" onclick="adjustWeight('${p.id}', 0.1)">+</button>
+      </div>
+      <button class="project-delete" onclick="deleteProject('${p.id}')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function addProject(){
+  const input = document.getElementById('newProjectInput');
+  const name = input.value.trim();
+  if(!name) return;
+  state.projects.push({ id: 'proj_'+Date.now(), name, weight: 1.0 });
+  input.value = '';
+  saveLocal();
+  renderProjectManageList();
+  showToast("프로젝트를 추가했어요");
+}
+
+function renameProject(id, newName){
+  const p = state.projects.find(x=>x.id===id);
+  if(!p) return;
+  const trimmed = newName.trim();
+  if(!trimmed) { renderProjectManageList(); return; }
+  p.name = trimmed;
+  saveLocal();
+  renderWeekView();
+}
+
+function adjustWeight(id, delta){
+  const p = state.projects.find(x=>x.id===id);
+  if(!p) return;
+  p.weight = Math.max(0.5, Math.min(2.0, Math.round((p.weight + delta)*10)/10));
+  saveLocal();
+  renderProjectManageList();
+  renderWeekView();
+}
+
+function deleteProject(id){
+  const inUse = state.tasks.some(t=>t.projectId===id);
+  if(inUse){
+    if(!confirm("이 프로젝트로 등록된 할 일이 있어요. 그래도 삭제할까요? (할 일은 '미분류'로 남아요)")) return;
+  }
+  state.projects = state.projects.filter(p=>p.id!==id);
+  saveLocal();
+  renderProjectManageList();
+  showToast("프로젝트를 삭제했어요");
+}
+
+/* =========================================================================
+   통계 모달 (간단 — 통계 박스 탭 시 캘린더로 이동)
+   ========================================================================= */
+function openStatsModal(){
+  goPage('calendar');
+}
+
+/* =========================================================================
+   Firebase 연동
+   ========================================================================= */
+function persistTask(task){
+  if(!firebaseReady || !db) return;
+  db.collection('schedule_tasks').doc(task.id).set(task).catch(err=>{
+    console.warn("Firestore 저장 실패 (로컬에는 저장됨):", err);
+  });
+}
+
+function subscribeFirestore(){
+  if(!firebaseReady || !db) return;
+  db.collection('schedule_tasks').onSnapshot(snapshot=>{
+    const remoteTasks = [];
+    snapshot.forEach(doc=> remoteTasks.push(doc.data()));
+    if(remoteTasks.length > 0){
+      state.tasks = remoteTasks;
+      saveLocal();
+      renderWeekView();
+      if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+    }
+  }, err=> console.warn("Firestore 구독 실패:", err));
+
+  db.collection('schedule_settings').doc('character').get().then(doc=>{
+    if(doc.exists && doc.data().imageUrl){
+      state.charImageUrl = doc.data().imageUrl;
+      applyCharImage();
+    }
+  }).catch(()=>{});
+}
+
+/* =========================================================================
+   토스트
+   ========================================================================= */
+let toastTimer = null;
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toast.classList.remove('show'), 2200);
+}
+
+/* =========================================================================
+   초기화
+   ========================================================================= */
+function init(){
+  loadLocal();
+  if(state.charImageUrl) applyCharImage();
+  renderWeekView();
+  renderFocusBar();
+  if(state.focusSession) startFocusTicker();
+  subscribeFirestore();
+  setTimeout(()=> document.getElementById('loadingScreen').classList.add('hide'), 300);
+}
+
+init();
+</script>
+
+</body>
+</html>
