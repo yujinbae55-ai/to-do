@@ -59,27 +59,35 @@
 }
 
 *{ box-sizing:border-box; margin:0; padding:0; }
-html,body{
+html{ height:100%; }
+body{
   font-family: var(--font-sans);
   background: var(--c-bg);
   color: var(--c-text);
   -webkit-font-smoothing: antialiased;
-  height:100%;
+  min-height:100%;
+  position:relative;
 }
 button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
 input,select,textarea{ font-family:inherit; }
 
 /* ===================== 배경 워시 ===================== */
-.bg-wash{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.bg-wash{ position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
 .bg-wash::before{
   content:""; position:absolute; top:-20%; right:-15%; width:60vw; height:60vw; max-width:600px; max-height:600px;
   background: radial-gradient(circle, var(--c-orange-100) 0%, rgba(255,228,212,0) 70%);
   border-radius:50%;
 }
 .bg-wash::after{
-  content:""; position:absolute; bottom:-25%; left:-15%; width:50vw; height:50vw; max-width:500px; max-height:500px;
+  content:""; position:absolute; bottom:-10%; left:-15%; width:50vw; height:50vw; max-width:500px; max-height:500px;
   background: radial-gradient(circle, var(--c-orange-50) 0%, rgba(255,244,237,0) 70%);
   border-radius:50%;
+}
+.bg-wash .bg-mid{
+  position:absolute; top:45%; left:50%; width:70vw; height:70vw; max-width:700px; max-height:700px;
+  transform:translate(-50%,-50%);
+  background: radial-gradient(circle, var(--c-orange-50) 0%, rgba(255,244,237,0) 65%);
+  border-radius:50%; opacity:0.6;
 }
 
 /* ===================== 레이아웃 셸 ===================== */
@@ -318,6 +326,7 @@ input,select,textarea{ font-family:inherit; }
 .week-block .wb-title{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .week-block .wb-time{ font-size:9.5px; opacity:0.85; white-space:nowrap; }
 .week-block.event-recurring{ background:var(--c-blue-500); color:white; }
+.week-block.event-recurring.skipped{ background:var(--c-surface-2); color:var(--c-text-3); border:1px dashed var(--c-border-2); text-decoration:line-through; }
 .week-block.event-once{ background:var(--c-blue-200); color:var(--c-blue-600); }
 .week-block.focus-log{ background:var(--c-orange-100); color:var(--c-orange-600); border:1px solid var(--c-orange-300); }
 .week-block.focus-log.live{ background:var(--c-orange-400); color:white; border-color:transparent; }
@@ -497,6 +506,14 @@ input,select,textarea{ font-family:inherit; }
 .subtask-add-btn .ic{ width:14px; height:14px; }
 
 .subtask-progress{ font-size:11.5px; color:var(--c-text-3); margin-left:4px; }
+
+.event-skip-btn{
+  align-self:flex-start; margin-top:8px; margin-left:35px;
+  font-size:12px; color:var(--c-text-3); padding:5px 11px;
+  border:1px solid var(--c-border-2); border-radius:var(--radius-pill);
+  transition:all .15s;
+}
+.event-skip-btn:hover{ color:var(--c-danger); border-color:var(--c-danger); }
 .subtask-view-list{ margin-top:8px; padding-left:35px; display:flex; flex-direction:column; gap:6px; }
 .subtask-view-row{ display:flex; align-items:center; gap:8px; }
 .subtask-check{ width:17px; height:17px; flex-shrink:0; border-radius:50%; border:1.3px solid var(--c-border-2); display:flex; align-items:center; justify-content:center; }
@@ -525,7 +542,7 @@ input,select,textarea{ font-family:inherit; }
 </head>
 <body>
 
-<div class="bg-wash"></div>
+<div class="bg-wash"><div class="bg-mid"></div></div>
 
 <div id="app">
   <div class="shell">
@@ -1039,9 +1056,30 @@ const DOW = ['일','월','화','수','목','금','토'];
 function getItemsForDate(dateStr){
   const dow = new Date(dateStr+"T00:00:00").getDay();
   return state.tasks.filter(t=>{
-    if(t.recurring) return t.dow === dow;
+    if(t.recurring){
+      if(t.dow !== dow) return false;
+      if(t.exceptions && t.exceptions.includes(dateStr)) return false;
+      return true;
+    }
     return t.date === dateStr;
   });
+}
+
+function skipRecurringOnce(taskId, dateStr){
+  const t = state.tasks.find(x=>x.id===taskId);
+  if(!t || !t.recurring) return;
+  if(!t.exceptions) t.exceptions = [];
+  if(!t.exceptions.includes(dateStr)){
+    t.exceptions.push(dateStr);
+  }
+  persistTask(t);
+  saveLocal();
+  renderWeekView();
+  if(document.getElementById('page-calendar').classList.contains('active')){
+    if(state.calView === 'week') renderWeekCalendar(); else renderCalendar();
+  }
+  refreshDayDetailIfOpen();
+  showToast("이번 주는 취소했어요");
 }
 
 /* =========================================================================
@@ -1168,7 +1206,7 @@ function renderWeekView(){
     if(dayTasks.length === 0){
       bodyHtml = `<p style="font-size:12.5px; color:var(--c-text-3); padding:4px 2px 2px;">비어있어요</p>`;
     } else {
-      bodyHtml = `<div class="task-list">` + dayTasks.map(t=>taskRowHtml(t, farClass)).join('') + `</div>`;
+      bodyHtml = `<div class="task-list">` + dayTasks.map(t=>taskRowHtml(t, farClass, false, dateStr)).join('') + `</div>`;
     }
 
     html += `
@@ -1198,7 +1236,7 @@ function renderWeekView(){
   renderHero();
 }
 
-function taskRowHtml(t, extraClass, showMissedDate){
+function taskRowHtml(t, extraClass, showMissedDate, contextDate){
   const proj = state.projects.find(p=>p.id===t.projectId);
   const projName = proj ? proj.name : '';
   const chipClass = t.type === 'event' ? 'chip event' : 'chip';
@@ -1247,6 +1285,12 @@ function taskRowHtml(t, extraClass, showMissedDate){
     chipLabelFinal = t.recurring ? '고정 일정' : '일정';
   }
 
+  // 고정 일정 + 이 카드가 어느 날짜 맥락에서 보여지는지 알 때만 "이번 주만 취소" 노출
+  const skipBtnHtml = (t.type === 'event' && t.recurring && contextDate) ? `
+      <button class="event-skip-btn" onclick="event.stopPropagation(); skipRecurringOnce('${t.id}','${contextDate}')">
+        이번 주만 취소
+      </button>` : '';
+
   return `
     <div class="task-row ${t.done ? 'done' : ''} ${extraClass||''}" data-id="${t.id}" style="flex-direction:column; align-items:stretch;">
       <div class="task-row-main">
@@ -1264,6 +1308,7 @@ function taskRowHtml(t, extraClass, showMissedDate){
         ${expandBtnHtml}
       </div>
       ${subtaskListHtml}
+      ${skipBtnHtml}
     </div>`;
 }
 
@@ -1711,10 +1756,15 @@ function renderWeekCalendar(){
 
     state.tasks.forEach(t=>{
       if(t.type === 'event'){
-        if(t.recurring && t.dow === dow && t.time){
+        const isSkipped = t.recurring && t.exceptions && t.exceptions.includes(dStr);
+        if(t.recurring && t.dow === dow && t.time && !isSkipped){
           const startMin = timeStrToMinutes(t.time);
           const endMin = t.endTime ? timeStrToMinutes(t.endTime) : startMin+60;
           blocks.push({ kind:'event-recurring', title:t.title, startMin, endMin, timeLabel: t.endTime ? `${t.time}-${t.endTime}` : t.time });
+        } else if(t.recurring && t.dow === dow && t.time && isSkipped){
+          const startMin = timeStrToMinutes(t.time);
+          const endMin = t.endTime ? timeStrToMinutes(t.endTime) : startMin+60;
+          blocks.push({ kind:'event-recurring skipped', title:t.title+' (취소)', startMin, endMin, timeLabel: '이번 주 취소' });
         } else if(!t.recurring && t.date === dStr && t.time){
           const startMin = timeStrToMinutes(t.time);
           const endMin = t.endTime ? timeStrToMinutes(t.endTime) : startMin+60;
@@ -1811,7 +1861,7 @@ function renderCalendar(){
     const pillsHtml = previewTasks.map(t=>{
       const cls = t.type === 'event' ? 'cal-item-pill event' : 'cal-item-pill';
       const doneCls = t.done ? ' done' : '';
-      return `<span class="${cls}${doneCls}">${escapeHtml(t.title)}</span>`;
+      return `<span class="${cls}${doneCls}" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</span>`;
     }).join('') + (moreCount > 0 ? `<span class="cal-item-more">+${moreCount}개 더</span>` : '');
 
     html += `
@@ -1835,7 +1885,7 @@ function openDayDetailModal(dateStr){
   const container = document.getElementById('dayDetailList');
   container.innerHTML = list.length===0
     ? `<div class="empty-state"><p>이 날은 비어있어요</p></div>`
-    : list.map(t=>taskRowHtml(t,'')).join('');
+    : list.map(t=>taskRowHtml(t,'',false,dateStr)).join('');
 
   document.getElementById('dayDetailOverlay').classList.add('open');
   document.getElementById('mainFab').classList.add('hide');
