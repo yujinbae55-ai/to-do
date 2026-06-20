@@ -38,6 +38,15 @@
   --c-success-bg:#EAF5EE;
   --c-danger:    #D9534F;
 
+  /* 일정(이벤트) 전용 — 할 일(오렌지)과 구분되는 파란 계열, 고정=진함/변동=연함 */
+  --c-blue-50:   #F1F4FE;
+  --c-blue-100:  #E4EAFC;
+  --c-blue-200:  #C7D3F7;
+  --c-blue-300:  #9DAFEE;
+  --c-blue-400:  #6F88E0;
+  --c-blue-500:  #4D6BC9;
+  --c-blue-600:  #3A52A3;
+
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -187,7 +196,8 @@ input,select,textarea{ font-family:inherit; }
 .task-title{ font-size:14.5px; font-weight:500; margin-bottom:3px; }
 .task-meta{ font-size:12px; color:var(--c-text-2); display:flex; align-items:center; gap:6px; }
 .chip{ display:inline-flex; align-items:center; font-size:11px; padding:2px 8px; border-radius:var(--radius-pill); background:var(--c-orange-50); color:var(--c-orange-600); font-weight:500; flex-shrink:0; }
-.chip.event{ background:#EFF3FF; color:#4D6BC9; }
+.chip.event{ background:var(--c-blue-50); color:var(--c-blue-500); }
+.chip.event.recurring{ background:var(--c-blue-500); color:white; }
 
 .empty-state{ text-align:center; padding:36px 20px; color:var(--c-text-3); }
 .empty-state .ic{ width:32px; height:32px; margin:0 auto 10px; opacity:0.5; }
@@ -253,6 +263,46 @@ input,select,textarea{ font-family:inherit; }
 .upload-zone:hover{ border-color:var(--c-orange-400); background:var(--c-orange-50); }
 .upload-zone .ic{ width:28px; height:28px; margin:0 auto 10px; color:var(--c-orange-400); }
 
+/* ===================== 캘린더 - 주간 시간표 뷰 ===================== */
+.week-legend{ display:flex; gap:14px; margin-bottom:12px; flex-wrap:wrap; }
+.week-legend-item{ display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--c-text-2); }
+.week-legend-item .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+.week-grid-scroll{ overflow-x:auto; }
+.week-grid{
+  display:grid;
+  grid-template-columns: 44px repeat(7, minmax(76px, 1fr));
+  min-width:600px;
+}
+.week-head-cell{
+  position:sticky; top:0; background:var(--c-surface); z-index:2;
+  text-align:center; padding:6px 2px 10px; border-bottom:1px solid var(--c-border);
+}
+.week-head-cell .dname{ font-size:11px; color:var(--c-text-3); }
+.week-head-cell .ddate{ font-size:13px; font-weight:500; margin-top:2px; }
+.week-head-cell.today .ddate{ color:var(--c-orange-600); }
+.week-head-corner{ border-bottom:1px solid var(--c-border); }
+
+.week-time-cell{
+  font-size:10px; color:var(--c-text-3); text-align:right; padding-right:6px;
+  position:relative; top:-6px; white-space:nowrap;
+}
+.week-day-col{ position:relative; border-left:1px solid var(--c-border); }
+.week-hour-row{ height:44px; border-bottom:1px solid var(--c-border); box-sizing:border-box; }
+.week-hour-row.half{ border-bottom:1px dashed var(--c-border); }
+
+.week-block{
+  position:absolute; left:2px; right:2px; border-radius:6px;
+  padding:3px 6px; font-size:10.5px; line-height:1.3; overflow:hidden;
+  box-sizing:border-box; cursor:pointer;
+}
+.week-block .wb-title{ font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.week-block .wb-time{ font-size:9.5px; opacity:0.85; white-space:nowrap; }
+.week-block.event-recurring{ background:var(--c-blue-500); color:white; }
+.week-block.event-once{ background:var(--c-blue-200); color:var(--c-blue-600); }
+.week-block.focus-log{ background:var(--c-orange-100); color:var(--c-orange-600); border:1px solid var(--c-orange-300); }
+.week-block.focus-log.live{ background:var(--c-orange-400); color:white; border-color:transparent; }
+
 /* ===================== 캘린더 (월간 콤팩트) ===================== */
 .cal-card{ padding:14px; }
 .cal-dow-row{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:3px; margin-bottom:4px; }
@@ -276,7 +326,7 @@ input,select,textarea{ font-family:inherit; }
 .cal-item-more{ display:none; }
 .cal-dots{ display:flex; gap:2px; flex-wrap:wrap; justify-content:center; }
 .cal-dot{ width:4.5px; height:4.5px; border-radius:50%; background:var(--c-orange-400); flex-shrink:0; }
-.cal-dot.event{ background:#4D6BC9; }
+.cal-dot.event{ background:var(--c-blue-500); }
 .cal-dot.done{ opacity:0.35; }
 
 /* 넓은 화면: 텍스트 미리보기로 전환 */
@@ -289,7 +339,7 @@ input,select,textarea{ font-family:inherit; }
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     background:var(--c-orange-100); color:var(--c-orange-600); line-height:1.5;
   }
-  .cal-item-pill.event{ background:#E4EAFC; color:#4D6BC9; }
+  .cal-item-pill.event{ background:var(--c-blue-100); color:var(--c-blue-500); }
   .cal-item-pill.done{ opacity:0.5; text-decoration:line-through; }
   .cal-item-more{ display:block; font-size:10.5px; color:var(--c-text-3); padding:1px 6px; }
 }
@@ -558,7 +608,45 @@ input,select,textarea{ font-family:inherit; }
 
       <!-- ---------- 캘린더 페이지 ---------- -->
       <section class="page wide" id="page-calendar">
-        <div class="card cal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="type-toggle" style="width:auto; display:inline-flex;">
+            <button class="choice-btn selected" id="calViewWeekBtn" onclick="setCalView('week')" style="padding:7px 16px;">주간</button>
+            <button class="choice-btn" id="calViewMonthBtn" onclick="setCalView('month')" style="padding:7px 16px;">월간</button>
+          </div>
+          <button onclick="openTaskModal()" style="font-size:12.5px; padding:7px 13px; border:1px solid var(--c-border-2); border-radius:var(--radius-pill); color:var(--c-orange-600); display:flex; align-items:center; gap:4px;">
+            <svg class="ic" style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            등록
+          </button>
+        </div>
+
+        <!-- ---- 주간 뷰 (기본) ---- -->
+        <div class="card cal-card" id="calWeekWrap">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button onclick="shiftWeek(-1)" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);">
+                <svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <p style="font-size:15px;font-weight:500;" id="weekRangeLabel">6월 15일 – 21일</p>
+              <button onclick="shiftWeek(1)" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);">
+                <svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <button onclick="goToThisWeek()" style="font-size:12px; color:var(--c-text-3); padding:5px 10px;">이번 주</button>
+          </div>
+
+          <div class="week-legend">
+            <span class="week-legend-item"><span class="dot" style="background:var(--c-blue-500);"></span>고정 일정</span>
+            <span class="week-legend-item"><span class="dot" style="background:var(--c-blue-200);"></span>이번 일정</span>
+            <span class="week-legend-item"><span class="dot" style="background:var(--c-orange-400);"></span>집중 기록</span>
+          </div>
+
+          <div class="week-grid-scroll">
+            <div class="week-grid" id="weekGrid"></div>
+          </div>
+        </div>
+
+        <!-- ---- 월간 뷰 ---- -->
+        <div class="card cal-card hide" id="calMonthWrap">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
             <div style="display:flex; align-items:center; gap:10px;">
               <button onclick="shiftMonth(-1)" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--c-text-2);">
@@ -569,10 +657,6 @@ input,select,textarea{ font-family:inherit; }
                 <svg class="ic" style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
               </button>
             </div>
-            <button onclick="openTaskModal()" style="font-size:12.5px; padding:7px 13px; border:1px solid var(--c-border-2); border-radius:var(--radius-pill); color:var(--c-orange-600); display:flex; align-items:center; gap:4px;">
-              <svg class="ic" style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-              등록
-            </button>
           </div>
           <div id="calDowRow" class="cal-dow-row"></div>
           <div id="calGrid" class="cal-grid"></div>
@@ -687,7 +771,15 @@ input,select,textarea{ font-family:inherit; }
       </div>
     </div>
 
-    <div class="field-group">
+    <div class="field-group hide" id="recurringFieldGroup">
+      <p class="field-label">언제 반복되나요</p>
+      <div class="type-toggle">
+        <button class="choice-btn wide selected" id="recurringOnceBtn" onclick="setRecurring(false)">이번만</button>
+        <button class="choice-btn wide" id="recurringWeeklyBtn" onclick="setRecurring(true)">매주 반복</button>
+      </div>
+    </div>
+
+    <div class="field-group" id="dateFieldGroup">
       <p class="field-label" id="dateFieldLabel">언제까지</p>
       <div class="choice-row" id="dateChips"></div>
       <div class="date-input-wrap" id="customDateWrap">
@@ -695,9 +787,18 @@ input,select,textarea{ font-family:inherit; }
       </div>
     </div>
 
+    <div class="field-group hide" id="dowFieldGroup">
+      <p class="field-label">무슨 요일</p>
+      <div class="choice-row" id="dowChips"></div>
+    </div>
+
     <div class="field-group" id="timeFieldGroup">
-      <p class="field-label">시간 (선택)</p>
-      <input type="time" class="date-input" id="eventTimeInput">
+      <p class="field-label" id="timeFieldLabel">시간 (선택)</p>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="time" class="date-input" id="eventTimeInput" style="flex:1;">
+        <span class="hide" id="timeRangeDash" style="color:var(--c-text-3); font-size:13px;">–</span>
+        <input type="time" class="date-input hide" id="eventEndTimeInput" style="flex:1;">
+      </div>
     </div>
 
     <div class="field-group" id="projectFieldGroup">
@@ -848,8 +949,12 @@ let state = {
   selectedDate: null,
   selectedDuration: 'medium',
   selectedProjectId: DEFAULT_PROJECTS[0].id,
+  selectedRecurring: false,   // 등록 모달: 일정의 고정(매주반복)/변동(이번만) 여부
+  selectedDow: null,          // 등록 모달: 고정 일정의 요일 (0=일~6=토)
   calCursor: new Date(),
   calSelectedDate: null,
+  calView: 'week',            // 캘린더 탭 기본 뷰: 'week' | 'month'
+  weekCursor: getMondayOf(new Date()), // 주간 뷰 기준 주의 월요일
   lastSeenLevel: 1,
   subtaskDraft: [],           // 등록 모달에서 임시로 입력 중인 하위 항목들
   focusSession: null,         // { taskId, startedAt } 진행중인 집중 세션
@@ -906,6 +1011,15 @@ function dDayLabel(dateStr){
 }
 const DOW = ['일','월','화','수','목','금','토'];
 
+// 특정 날짜(dateStr)에 해당하는 항목들: 변동 일정/할 일(date 일치) + 그 요일의 고정 일정
+function getItemsForDate(dateStr){
+  const dow = new Date(dateStr+"T00:00:00").getDay();
+  return state.tasks.filter(t=>{
+    if(t.recurring) return t.dow === dow;
+    return t.date === dateStr;
+  });
+}
+
 /* =========================================================================
    우선순위 계산
    ========================================================================= */
@@ -935,7 +1049,9 @@ function goPage(name){
   document.querySelectorAll('.nav-item, .tab-item').forEach(b=>{
     b.classList.toggle('active', b.dataset.page === name);
   });
-  if(name === 'calendar') renderCalendar();
+  if(name === 'calendar'){
+    if(state.calView === 'week') renderWeekCalendar(); else renderCalendar();
+  }
   if(name === 'settings') renderSettingsPage();
   if(name === 'recap') renderRecapPage();
 }
@@ -970,7 +1086,7 @@ function renderWeekView(){
   for(let i=0;i<7;i++){
     const dateStr = addDays(today, i);
     const d = new Date(dateStr+"T00:00:00");
-    const dayTasks = state.tasks.filter(t=>t.date===dateStr);
+    const dayTasks = getItemsForDate(dateStr);
     dayTasks.sort((a,b)=> priorityScore(b)-priorityScore(a));
     totalCount += dayTasks.length;
 
@@ -1046,12 +1162,20 @@ function taskRowHtml(t, extraClass, showMissedDate){
 
   let dateMeta;
   if(t.type === 'event'){
-    dateMeta = t.time ? `<span>${t.time}</span>` : '';
+    const timeLabel = t.endTime ? `${t.time}–${t.endTime}` : (t.time || '');
+    dateMeta = timeLabel ? `<span>${timeLabel}</span>` : '';
   } else if(showMissedDate){
     const d = new Date(t.date+"T00:00:00");
     dateMeta = `<span>${d.getMonth()+1}.${d.getDate()} 일이었어요</span>`;
   } else {
     dateMeta = `<span>${dDayLabel(t.date)}</span>`;
+  }
+
+  let chipClassFinal = chipClass;
+  let chipLabelFinal = chipLabel;
+  if(t.type === 'event'){
+    chipClassFinal = t.recurring ? 'chip event recurring' : 'chip event';
+    chipLabelFinal = t.recurring ? '고정 일정' : '일정';
   }
 
   return `
@@ -1063,7 +1187,7 @@ function taskRowHtml(t, extraClass, showMissedDate){
         <div class="task-body">
           <p class="task-title">${escapeHtml(t.title)}${hasSubtasks ? `<span class="subtask-progress">${doneSubCount}/${subtasks.length}</span>`:''}</p>
           <div class="task-meta">
-            <span class="${chipClass}">${chipLabel}</span>
+            <span class="${chipClassFinal}">${chipLabelFinal}</span>
             ${dateMeta}
             ${focusLabel}
           </div>
@@ -1341,10 +1465,14 @@ function startFocus(taskId){
 
 function stopFocus(){
   if(!state.focusSession) return;
-  const elapsedSec = Math.round((Date.now() - state.focusSession.startedAt) / 1000);
+  const startedAt = state.focusSession.startedAt;
+  const endedAt = Date.now();
+  const elapsedSec = Math.round((endedAt - startedAt) / 1000);
   const t = state.tasks.find(x=>x.id===state.focusSession.taskId);
   if(t && elapsedSec > 0){
     t.focusSeconds = (t.focusSeconds||0) + elapsedSec;
+    if(!t.focusSessions) t.focusSessions = [];
+    t.focusSessions.push({ start: new Date(startedAt).toISOString(), end: new Date(endedAt).toISOString() });
     persistTask(t);
   }
   state.focusSession = null;
@@ -1352,6 +1480,7 @@ function stopFocus(){
   stopFocusTicker();
   renderFocusBar();
   renderWeekView();
+  if(document.getElementById('page-calendar') && document.getElementById('page-calendar').classList.contains('active') && state.calView==='week') renderWeekCalendar();
   if(elapsedSec >= 60){
     showToast(`${formatDuration(elapsedSec)} 집중했어요`);
   } else {
@@ -1430,6 +1559,147 @@ function renderFocusBar(){
 /* =========================================================================
    캘린더
    ========================================================================= */
+function setCalView(view){
+  state.calView = view;
+  document.getElementById('calViewWeekBtn').classList.toggle('selected', view==='week');
+  document.getElementById('calViewMonthBtn').classList.toggle('selected', view==='month');
+  document.getElementById('calWeekWrap').classList.toggle('hide', view!=='week');
+  document.getElementById('calMonthWrap').classList.toggle('hide', view!=='month');
+  if(view === 'week') renderWeekCalendar(); else renderCalendar();
+}
+
+function shiftWeek(delta){
+  const d = new Date(state.weekCursor);
+  d.setDate(d.getDate() + delta*7);
+  state.weekCursor = d;
+  renderWeekCalendar();
+}
+function goToThisWeek(){
+  state.weekCursor = getMondayOf(new Date());
+  renderWeekCalendar();
+}
+
+const WEEK_START_HOUR = 7;
+const WEEK_END_HOUR = 23;   // 7시~23시, 시간당 44px
+const WEEK_HOUR_PX = 44;
+
+function timeStrToMinutes(timeStr){
+  const [h,m] = timeStr.split(':').map(Number);
+  return h*60+m;
+}
+function dateToMinutes(d){
+  return d.getHours()*60 + d.getMinutes();
+}
+
+function renderWeekCalendar(){
+  const monday = state.weekCursor;
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate()+6);
+  const mLabel = `${monday.getMonth()+1}월 ${monday.getDate()}일`;
+  const sLabel = (sunday.getMonth()===monday.getMonth()) ? `${sunday.getDate()}일` : `${sunday.getMonth()+1}월 ${sunday.getDate()}일`;
+  document.getElementById('weekRangeLabel').textContent = `${mLabel} – ${sLabel}`;
+
+  const todayD = todayStr();
+  const weekDates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(monday); d.setDate(d.getDate()+i);
+    weekDates.push(d);
+  }
+
+  // ---- 헤더 행 ----
+  let headHtml = `<div class="week-head-corner"></div>`;
+  weekDates.forEach(d=>{
+    const dStr = fmtDate(d);
+    const isToday = dStr === todayD;
+    headHtml += `<div class="week-head-cell ${isToday?'today':''}">
+      <div class="dname">${DOW[d.getDay()]}</div>
+      <div class="ddate">${d.getDate()}</div>
+    </div>`;
+  });
+
+  // ---- 시간 라벨 + 요일 컬럼 (배경 그리드) ----
+  const totalHours = WEEK_END_HOUR - WEEK_START_HOUR;
+  let timeColHtml = `<div class="week-head-corner" style="grid-row:1;"></div>`;
+  // 시간 라벨 칸들을 시간 컬럼에 쌓음
+  let timeLabelsHtml = '';
+  for(let h=WEEK_START_HOUR; h<=WEEK_END_HOUR; h++){
+    timeLabelsHtml += `<div class="week-time-cell" style="height:${WEEK_HOUR_PX}px;">${String(h).padStart(2,'0')}:00</div>`;
+  }
+
+  // ---- 각 요일 컬럼: 배경 시간 슬롯 + 블록(고정일정/변동일정/집중기록) ----
+  let dayColsHtml = '';
+  weekDates.forEach(d=>{
+    const dStr = fmtDate(d);
+    const dow = d.getDay();
+
+    // 배경 시간 슬롯 (빈 그리드 라인)
+    let bgHtml = '';
+    for(let h=WEEK_START_HOUR; h<=WEEK_END_HOUR; h++){
+      bgHtml += `<div class="week-hour-row"></div>`;
+    }
+
+    // 블록 수집: 고정 일정(이 요일에 해당), 변동 일정(이 날짜), 집중 세션(이 날짜에 시작한 것)
+    const blocks = [];
+
+    state.tasks.forEach(t=>{
+      if(t.type === 'event'){
+        if(t.recurring && t.dow === dow && t.time){
+          const startMin = timeStrToMinutes(t.time);
+          const endMin = t.endTime ? timeStrToMinutes(t.endTime) : startMin+60;
+          blocks.push({ kind:'event-recurring', title:t.title, startMin, endMin, timeLabel: t.endTime ? `${t.time}-${t.endTime}` : t.time });
+        } else if(!t.recurring && t.date === dStr && t.time){
+          const startMin = timeStrToMinutes(t.time);
+          const endMin = startMin+60;
+          blocks.push({ kind:'event-once', title:t.title, startMin, endMin, timeLabel: t.time });
+        }
+      }
+      // 집중 세션: 그 세션이 시작된 날짜 기준으로 표시
+      if(t.type === 'task' && t.focusSessions){
+        t.focusSessions.forEach(s=>{
+          const sd = new Date(s.start);
+          if(fmtDate(sd) !== dStr) return;
+          const ed = new Date(s.end);
+          blocks.push({
+            kind:'focus-log', title:t.title,
+            startMin: dateToMinutes(sd), endMin: dateToMinutes(ed),
+            timeLabel: `${String(sd.getHours()).padStart(2,'0')}:${String(sd.getMinutes()).padStart(2,'0')}`
+          });
+        });
+      }
+    });
+
+    // 진행 중인 집중 세션도 실시간으로 보여주기
+    if(state.focusSession){
+      const liveTask = state.tasks.find(x=>x.id===state.focusSession.taskId);
+      const sd = new Date(state.focusSession.startedAt);
+      if(liveTask && fmtDate(sd) === dStr){
+        blocks.push({
+          kind:'focus-log live', title: liveTask.title,
+          startMin: dateToMinutes(sd), endMin: dateToMinutes(new Date()),
+          timeLabel: '진행 중'
+        });
+      }
+    }
+
+    const blocksHtml = blocks.map(b=>{
+      const clampedStart = Math.max(b.startMin, WEEK_START_HOUR*60);
+      const clampedEnd = Math.min(Math.max(b.endMin, clampedStart+15), WEEK_END_HOUR*60);
+      const top = (clampedStart - WEEK_START_HOUR*60) / 60 * WEEK_HOUR_PX;
+      const height = Math.max(18, (clampedEnd - clampedStart) / 60 * WEEK_HOUR_PX - 2);
+      return `<div class="week-block ${b.kind}" style="top:${top}px; height:${height}px;" title="${escapeHtml(b.title)}">
+        <div class="wb-title">${escapeHtml(b.title)}</div>
+        <div class="wb-time">${b.timeLabel}</div>
+      </div>`;
+    }).join('');
+
+    dayColsHtml += `<div class="week-day-col" style="grid-row:2;">${bgHtml}${blocksHtml}</div>`;
+  });
+
+  // ---- 시간 라벨 컬럼 (grid-row 2, grid-column 1) ----
+  const timeColFinalHtml = `<div style="grid-row:2; display:flex; flex-direction:column;">${timeLabelsHtml}</div>`;
+
+  document.getElementById('weekGrid').innerHTML = headHtml + timeColFinalHtml + dayColsHtml;
+}
+
 function shiftMonth(delta){
   state.calCursor.setMonth(state.calCursor.getMonth()+delta);
   renderCalendar();
@@ -1453,7 +1723,7 @@ function renderCalendar(){
 
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = fmtDate(new Date(year, month, day));
-    const dayTasks = state.tasks.filter(t=>t.date===dateStr);
+    const dayTasks = getItemsForDate(dateStr);
     dayTasks.sort((a,b)=> priorityScore(b)-priorityScore(a));
     const isToday = dateStr === todayD;
 
@@ -1490,7 +1760,7 @@ function openDayDetailModal(dateStr){
   const d = new Date(dateStr+"T00:00:00");
   document.getElementById('dayDetailTitle').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 ${DOW[d.getDay()]}요일`;
 
-  const list = state.tasks.filter(t=>t.date===dateStr);
+  const list = getItemsForDate(dateStr);
   list.sort((a,b)=> priorityScore(b)-priorityScore(a));
 
   const container = document.getElementById('dayDetailList');
@@ -1519,11 +1789,14 @@ function openTaskModal(){
   state.selectedType = 'task';
   state.selectedDate = todayStr();
   state.selectedDuration = 'medium';
+  state.selectedRecurring = false;
+  state.selectedDow = new Date().getDay();
   state.subtaskDraft = [];
   if(state.projects.length>0) state.selectedProjectId = state.projects[0].id;
 
   document.getElementById('taskTitleInput').value = '';
   document.getElementById('eventTimeInput').value = '';
+  document.getElementById('eventEndTimeInput').value = '';
   document.getElementById('customDateInput').value = '';
   document.getElementById('customDateWrap').classList.remove('show');
 
@@ -1552,8 +1825,49 @@ function setType(type){
   document.getElementById('projectFieldGroup').classList.toggle('hide', type==='event');
   document.getElementById('durationFieldGroup').classList.toggle('hide', type==='event');
   document.getElementById('subtaskFieldGroup').classList.toggle('hide', type==='event');
-  document.getElementById('timeFieldGroup').classList.toggle('hide', type==='task');
-  document.getElementById('dateFieldLabel').textContent = type==='event' ? '언제' : '언제까지';
+  document.getElementById('recurringFieldGroup').classList.toggle('hide', type==='task');
+
+  if(type === 'task'){
+    state.selectedRecurring = false;
+  }
+  // 일정일 때는 현재 selectedRecurring 상태에 맞춰 하위 필드 갱신
+  setRecurring(type==='event' ? state.selectedRecurring : false, true);
+  validateSubmit();
+}
+
+function setRecurring(isRecurring, skipReset){
+  state.selectedRecurring = isRecurring;
+  document.getElementById('recurringOnceBtn').classList.toggle('selected', !isRecurring);
+  document.getElementById('recurringWeeklyBtn').classList.toggle('selected', isRecurring);
+
+  document.getElementById('dateFieldGroup').classList.toggle('hide', isRecurring);
+  document.getElementById('dowFieldGroup').classList.toggle('hide', !isRecurring);
+
+  const isEvent = state.selectedType === 'event';
+  document.getElementById('timeFieldGroup').classList.toggle('hide', !isEvent);
+  document.getElementById('timeFieldLabel').textContent = isRecurring ? '시간' : '시간 (선택)';
+  document.getElementById('timeRangeDash').classList.toggle('hide', !isRecurring);
+  document.getElementById('eventEndTimeInput').classList.toggle('hide', !isRecurring);
+
+  if(isRecurring && !skipReset){
+    renderDowChips();
+  } else if(isRecurring){
+    renderDowChips();
+  }
+  validateSubmit();
+}
+
+function renderDowChips(){
+  const container = document.getElementById('dowChips');
+  if(!state.selectedDow && state.selectedDow !== 0) state.selectedDow = new Date().getDay();
+  container.innerHTML = DOW.map((d,idx)=>`
+    <button class="choice-btn ${idx===state.selectedDow?'selected':''}" onclick="selectDowChip(this, ${idx})">${d}요일</button>
+  `).join('');
+}
+function selectDowChip(btn, idx){
+  state.selectedDow = idx;
+  document.querySelectorAll('#dowChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
   validateSubmit();
 }
 
@@ -1649,14 +1963,32 @@ function removeSubtaskField(idx){
 
 function validateSubmit(){
   const title = document.getElementById('taskTitleInput').value.trim();
-  const ok = title.length > 0 && !!state.selectedDate;
+  const isRecurringEvent = state.selectedType === 'event' && state.selectedRecurring;
+  let ok = title.length > 0;
+  if(isRecurringEvent){
+    ok = ok && (state.selectedDow !== null && state.selectedDow !== undefined) && !!document.getElementById('eventTimeInput').value;
+  } else {
+    ok = ok && !!state.selectedDate;
+  }
   document.getElementById('submitTaskBtn').disabled = !ok;
 }
 document.getElementById('taskTitleInput').addEventListener('input', validateSubmit);
+document.getElementById('eventTimeInput').addEventListener('input', validateSubmit);
+document.getElementById('eventEndTimeInput').addEventListener('input', validateSubmit);
 
 function submitTask(){
   const title = document.getElementById('taskTitleInput').value.trim();
-  if(!title || !state.selectedDate) return;
+  if(!title) return;
+
+  const isEvent = state.selectedType === 'event';
+  const isRecurringEvent = isEvent && state.selectedRecurring;
+
+  if(isRecurringEvent){
+    if(state.selectedDow === null || state.selectedDow === undefined) return;
+    if(!document.getElementById('eventTimeInput').value) return;
+  } else {
+    if(!state.selectedDate) return;
+  }
 
   const subtasks = state.selectedType === 'task'
     ? state.subtaskDraft
@@ -1669,15 +2001,19 @@ function submitTask(){
     id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     title,
     type: state.selectedType,
-    date: state.selectedDate,
-    time: state.selectedType==='event' ? (document.getElementById('eventTimeInput').value || null) : null,
+    date: isRecurringEvent ? null : state.selectedDate,
+    time: isEvent ? (document.getElementById('eventTimeInput').value || null) : null,
+    endTime: (isEvent && isRecurringEvent) ? (document.getElementById('eventEndTimeInput').value || null) : null,
+    recurring: isRecurringEvent,
+    dow: isRecurringEvent ? state.selectedDow : null,
     projectId: state.selectedType==='task' ? state.selectedProjectId : null,
     duration: state.selectedType==='task' ? state.selectedDuration : null,
     done: false,
     doneAt: null,
     createdAt: new Date().toISOString(),
     subtasks,
-    focusSeconds: 0
+    focusSeconds: 0,
+    focusSessions: []   // [{start: ISOString, end: ISOString}, ...] 실제 집중한 시간대 기록
   };
 
   state.tasks.push(newTask);
@@ -1686,7 +2022,9 @@ function submitTask(){
 
   closeTaskModal();
   renderWeekView();
-  if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+  if(document.getElementById('page-calendar').classList.contains('active')){
+    if(state.calView === 'week') renderWeekCalendar(); else renderCalendar();
+  }
   showToast("등록했어요");
 }
 
