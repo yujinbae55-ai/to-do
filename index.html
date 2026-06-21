@@ -221,6 +221,7 @@ input,select,textarea{ font-family:inherit; }
   background:var(--c-surface); border:1px solid var(--c-orange-200); border-radius:var(--radius-md);
   padding:13px 16px; box-shadow:var(--shadow-soft);
 }
+.top-pick-row:hover .task-delete-btn{ opacity:1; }
 .top-pick-row.rank-1{ border-color:var(--c-orange-400); background:linear-gradient(135deg, var(--c-orange-50), var(--c-surface)); }
 .rank-badge{
   width:26px; height:26px; border-radius:50%; flex-shrink:0;
@@ -649,6 +650,14 @@ input,select,textarea{ font-family:inherit; }
 .task-expand-btn.open{ transform:rotate(180deg); }
 .task-expand-btn .ic{ width:14px; height:14px; }
 .task-row-main{ display:flex; align-items:center; gap:12px; width:100%; }
+
+.task-delete-btn{
+  width:24px; height:24px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  color:var(--c-text-3); opacity:0.4; transition:opacity .15s, color .15s;
+}
+.task-row:hover .task-delete-btn{ opacity:1; }
+.task-delete-btn:hover{ color:var(--c-danger); }
+.task-delete-btn .ic{ width:14px; height:14px; }
 
 /* ===================== 토스트 ===================== */
 .toast{ position:fixed; bottom:160px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--c-text); color:white; font-size:13.5px; padding:11px 20px; border-radius:var(--radius-pill); opacity:0; pointer-events:none; transition:all .25s; z-index:200; white-space:nowrap; display:flex; align-items:center; gap:6px; }
@@ -1389,6 +1398,9 @@ function renderTopPickSection(){
             <span>${whenLabel}</span>
           </div>
         </div>
+        <button class="task-delete-btn" onclick="event.stopPropagation(); deleteTask('${t.id}')" title="삭제">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+        </button>
       </div>`;
   }).join('');
 }
@@ -1519,6 +1531,11 @@ function taskRowHtml(t, extraClass, showMissedDate, contextDate){
         이번 주만 취소
       </button>` : '';
 
+  const deleteBtnHtml = `
+      <button class="task-delete-btn" onclick="event.stopPropagation(); deleteTask('${t.id}')" title="삭제">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+      </button>`;
+
   return `
     <div class="task-row ${t.done ? 'done' : ''} ${extraClass||''}" data-id="${t.id}" style="flex-direction:column; align-items:stretch;">
       <div class="task-row-main">
@@ -1534,6 +1551,7 @@ function taskRowHtml(t, extraClass, showMissedDate, contextDate){
           </div>
         </div>
         ${expandBtnHtml}
+        ${deleteBtnHtml}
       </div>
       ${subtaskListHtml}
       ${skipBtnHtml}
@@ -1863,6 +1881,39 @@ function toggleDone(id){
     showToast("완료했어요");
     checkLevelUp();
   }
+}
+
+function deleteTask(id){
+  const t = state.tasks.find(x=>x.id===id);
+  if(!t) return;
+
+  const confirmMsg = (t.type === 'event' && t.recurring)
+    ? `"${t.title}"은 매주 반복되는 고정 일정이에요. 삭제하면 앞으로의 모든 반복이 사라져요. 정말 삭제할까요?\n\n(이번 주만 빼고 싶다면 "이번 주만 취소"를 이용해주세요.)`
+    : `"${t.title}"을(를) 삭제할까요?`;
+
+  if(!confirm(confirmMsg)) return;
+
+  // 이 항목에 대해 진행 중인 집중 세션이 있다면 같이 정리
+  if(state.focusSession && state.focusSession.taskId === id){
+    state.focusSession = null;
+    stopFocusTicker();
+    renderFocusBar();
+  }
+
+  state.tasks = state.tasks.filter(x=>x.id!==id);
+  saveLocal();
+  if(firebaseReady && db){
+    db.collection('schedule_tasks').doc(id).delete().catch(err=>{
+      console.warn("삭제 실패 (로컬에는 반영됨):", err);
+    });
+  }
+
+  renderWeekView();
+  if(document.getElementById('page-calendar').classList.contains('active')){
+    if(state.calView === 'week') renderWeekCalendar(); else renderCalendar();
+  }
+  refreshDayDetailIfOpen();
+  showToast("삭제했어요");
 }
 
 /* =========================================================================
