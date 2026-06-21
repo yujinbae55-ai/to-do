@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>오늘부터, 하나씩</title>
+<title>Tody</title>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -113,9 +113,9 @@ input,select,textarea{ font-family:inherit; }
 /* ===================== 하단 탭바 ===================== */
 .tabbar{ position:fixed; bottom:0; left:0; right:0; background:var(--c-surface); border-top:0.5px solid var(--c-border); display:flex; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); z-index:50; }
 @media (min-width:768px){ .tabbar{ display:none; } }
-.tab-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 4px; font-size:11px; color:var(--c-text-3); border-radius:var(--radius-sm); }
+.tab-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; font-size:10px; color:var(--c-text-3); border-radius:var(--radius-sm); }
 .tab-item.active{ color:var(--c-orange-500); }
-.tab-item .ic{ width:22px; height:22px; }
+.tab-item .ic{ width:20px; height:20px; }
 
 /* ===================== 공통 카드 ===================== */
 .card{ background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-lg); padding:20px; box-shadow:var(--shadow-soft); }
@@ -372,6 +372,49 @@ input,select,textarea{ font-family:inherit; }
   .cal-item-more{ display:block; font-size:10.5px; color:var(--c-text-3); padding:1px 6px; }
 }
 
+/* ===================== 루틴 ===================== */
+.routine-group{ margin-bottom:24px; }
+.routine-group-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.routine-group-title{ font-size:13px; font-weight:500; color:var(--c-text-2); }
+.routine-add-btn{
+  font-size:12px; color:var(--c-orange-600); padding:5px 11px;
+  border:1px solid var(--c-border-2); border-radius:var(--radius-pill);
+  display:flex; align-items:center; gap:3px;
+}
+.routine-add-btn .ic{ width:12px; height:12px; }
+
+.routine-list{ display:flex; flex-direction:column; gap:8px; }
+.routine-row{
+  display:flex; align-items:center; gap:12px;
+  background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-md);
+  padding:13px 16px; box-shadow:var(--shadow-soft);
+}
+.routine-row.done{ background:var(--c-surface-2); }
+.routine-check{
+  width:24px; height:24px; flex-shrink:0; border-radius:50%;
+  border:1.5px solid var(--c-border-2); display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+}
+.routine-check.checked{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); border-color:transparent; }
+.routine-check .ic{ width:13px; height:13px; color:white; opacity:0; transition:opacity .1s; }
+.routine-check.checked .ic{ opacity:1; }
+.routine-body{ flex:1; min-width:0; }
+.routine-title{ font-size:14.5px; font-weight:500; }
+.routine-row.done .routine-title{ color:var(--c-text-3); text-decoration:line-through; }
+.routine-meta{ font-size:12px; color:var(--c-text-3); margin-top:2px; }
+.routine-pebbles{ display:flex; gap:2px; align-items:center; }
+.routine-pebble{ width:6px; height:6px; border-radius:50%; background:var(--c-orange-300); flex-shrink:0; }
+.routine-pebble-count{ font-size:11px; color:var(--c-text-3); margin-left:3px; }
+.routine-delete-btn{
+  width:24px; height:24px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  color:var(--c-text-3); opacity:0.4; transition:opacity .15s, color .15s;
+}
+.routine-row:hover .routine-delete-btn{ opacity:1; }
+.routine-delete-btn:hover{ color:var(--c-danger); }
+.routine-delete-btn .ic{ width:13px; height:13px; }
+
+.routine-empty{ text-align:center; padding:20px; color:var(--c-text-3); font-size:13px; }
+
 /* ===================== 돌아보기 ===================== */
 .recap-section{ margin-bottom:22px; }
 .recap-section:last-child{ margin-bottom:4px; }
@@ -439,6 +482,86 @@ input,select,textarea{ font-family:inherit; }
 .levelup-title{ font-size:18px; font-weight:500; margin-bottom:6px; }
 .levelup-sub{ font-size:13.5px; color:var(--c-text-2); margin-bottom:20px; }
 .levelup-btn{ background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); color:white; padding:11px 28px; border-radius:var(--radius-pill); font-size:14px; font-weight:500; }
+
+/* ===================== 브레인덤프 채팅창 ===================== */
+.dump-card{
+  background:var(--c-surface); border:0.5px solid var(--c-border); border-radius:var(--radius-lg);
+  margin-bottom:16px; box-shadow:var(--shadow-soft); overflow:hidden;
+}
+.dump-toggle{
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:13px 16px; gap:8px;
+}
+.dump-toggle-label{ font-size:13.5px; color:var(--c-text-2); }
+.dump-toggle-ic{ width:16px; height:16px; color:var(--c-text-3); transition:transform .2s; flex-shrink:0; }
+.dump-toggle-ic.open{ transform:rotate(180deg); }
+
+.dump-body{ display:none; border-top:0.5px solid var(--c-border); }
+.dump-body.open{ display:block; }
+
+.dump-scroll{
+  max-height:240px; overflow-y:auto;
+  padding:14px 16px; display:flex; flex-direction:column; gap:10px;
+}
+.dump-empty-hint{
+  display:flex; gap:8px; align-items:flex-start;
+}
+.dump-empty-hint .char-mini{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0; overflow:hidden;
+  background:linear-gradient(135deg, var(--c-orange-200), var(--c-coral-300));
+  display:flex; align-items:center; justify-content:center;
+}
+.dump-empty-hint .char-mini img{ width:100%; height:100%; object-fit:cover; }
+.dump-empty-hint .char-mini .ic{ width:14px; height:14px; color:white; }
+.dump-bubble-char{
+  background:var(--c-surface-2); border-radius:14px 14px 14px 4px;
+  padding:9px 13px; font-size:13px; color:var(--c-text-2); max-width:80%;
+}
+
+.dump-row{ display:flex; justify-content:flex-end; align-items:flex-start; gap:6px; }
+.dump-row.resolved{ opacity:0.55; }
+.dump-bubble{
+  background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400)); color:white;
+  border-radius:14px 14px 4px 14px; padding:9px 13px; font-size:13.5px; line-height:1.4;
+  max-width:78%; word-break:break-word;
+}
+.dump-row.resolved .dump-bubble{
+  text-decoration:line-through; background:var(--c-surface-2); color:var(--c-text-3);
+  border:1px solid var(--c-border-2);
+}
+.dump-check{
+  width:22px; height:22px; border-radius:50%; flex-shrink:0; margin-top:2px;
+  border:1.5px solid var(--c-border-2); background:var(--c-surface);
+  display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.dump-check.checked{ background:var(--c-success); border-color:transparent; }
+.dump-check .ic{ width:11px; height:11px; color:white; opacity:0; }
+.dump-check.checked .ic{ opacity:1; }
+.dump-delete-btn{
+  width:22px; height:22px; border-radius:50%; flex-shrink:0; margin-top:2px;
+  display:flex; align-items:center; justify-content:center; color:var(--c-text-3);
+  opacity:0.35; transition:opacity .15s, color .15s;
+}
+.dump-row:hover .dump-delete-btn{ opacity:1; }
+.dump-delete-btn:active{ color:var(--c-danger); opacity:1; }
+.dump-delete-btn:hover{ color:var(--c-danger); }
+.dump-delete-btn .ic{ width:13px; height:13px; }
+
+.dump-input-row{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px; border-top:0.5px solid var(--c-border);
+}
+.dump-input{
+  flex:1; font-size:13.5px; padding:9px 13px;
+  border:1px solid var(--c-border-2); border-radius:var(--radius-pill); background:var(--c-surface-2);
+}
+.dump-input:focus{ outline:none; border-color:var(--c-orange-400); background:var(--c-surface); }
+.dump-send-btn{
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg, var(--c-orange-400), var(--c-coral-400));
+  display:flex; align-items:center; justify-content:center;
+}
+.dump-send-btn .ic{ width:16px; height:16px; color:white; }
 
 /* ===================== 집중 타이머 ===================== */
 .focus-bar{
@@ -549,7 +672,7 @@ input,select,textarea{ font-family:inherit; }
 
     <!-- ===== 데스크톱 사이드바 ===== -->
     <nav class="sidebar">
-      <div class="brand"><span class="dot"></span>오늘부터, 하나씩</div>
+      <div class="brand"><span class="dot"></span>Tody</div>
       <button class="nav-item active" data-page="today" onclick="goPage('today')">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         오늘
@@ -557,6 +680,10 @@ input,select,textarea{ font-family:inherit; }
       <button class="nav-item" data-page="calendar" onclick="goPage('calendar')">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
         캘린더
+      </button>
+      <button class="nav-item" data-page="routines" onclick="goPage('routines')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 11-3.5-7.1M21 4v5h-5"/></svg>
+        루틴
       </button>
       <button class="nav-item" data-page="recap" onclick="goPage('recap')">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
@@ -609,6 +736,22 @@ input,select,textarea{ font-family:inherit; }
           <div>
             <p class="section-label" style="margin-bottom:8px;">최근 4주 추이</p>
             <div class="bars" id="trendBars"></div>
+          </div>
+        </div>
+
+        <div class="dump-card" id="dumpCard">
+          <button class="dump-toggle" onclick="toggleDumpExpanded()">
+            <span class="dump-toggle-label">생각나는 거, 여기 던져두세요</span>
+            <svg class="ic dump-toggle-ic" id="dumpToggleIc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="dump-body" id="dumpBody">
+            <div class="dump-scroll" id="dumpScroll"></div>
+            <div class="dump-input-row">
+              <input type="text" id="dumpInput" class="dump-input" placeholder="떠오른 거 그냥 적어보세요" maxlength="200">
+              <button class="dump-send-btn" onclick="sendDumpMessage()">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -704,6 +847,47 @@ input,select,textarea{ font-family:inherit; }
         </div>
       </section>
 
+      <!-- ---------- 루틴 페이지 ---------- -->
+      <section class="page" id="page-routines">
+        <div style="margin-bottom:20px;">
+          <p style="font-size:18px; font-weight:500; margin-bottom:4px;">루틴</p>
+          <p style="font-size:13px; color:var(--c-text-2);">매일, 매주, 매달 챙길 것들을 모아뒀어요</p>
+        </div>
+
+        <div class="routine-group">
+          <div class="routine-group-head">
+            <span class="routine-group-title">매일</span>
+            <button class="routine-add-btn" onclick="openRoutineModal('daily')">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              추가
+            </button>
+          </div>
+          <div id="routineListDaily" class="routine-list"></div>
+        </div>
+
+        <div class="routine-group">
+          <div class="routine-group-head">
+            <span class="routine-group-title">매주</span>
+            <button class="routine-add-btn" onclick="openRoutineModal('weekly')">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              추가
+            </button>
+          </div>
+          <div id="routineListWeekly" class="routine-list"></div>
+        </div>
+
+        <div class="routine-group">
+          <div class="routine-group-head">
+            <span class="routine-group-title">매달</span>
+            <button class="routine-add-btn" onclick="openRoutineModal('monthly')">
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              추가
+            </button>
+          </div>
+          <div id="routineListMonthly" class="routine-list"></div>
+        </div>
+      </section>
+
       <!-- ---------- 돌아보기 페이지 ---------- -->
       <section class="page" id="page-recap">
         <div id="recapPageBody"></div>
@@ -774,6 +958,10 @@ input,select,textarea{ font-family:inherit; }
     <button class="tab-item" data-page="calendar" onclick="goPage('calendar')">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
       캘린더
+    </button>
+    <button class="tab-item" data-page="routines" onclick="goPage('routines')">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 11-3.5-7.1M21 4v5h-5"/></svg>
+      루틴
     </button>
     <button class="tab-item" data-page="recap" onclick="goPage('recap')">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
@@ -917,6 +1105,34 @@ input,select,textarea{ font-family:inherit; }
   </div>
 </div>
 
+<!-- ===================== 루틴 등록 모달 ===================== -->
+<div class="modal-overlay" id="routineModalOverlay" onclick="closeRoutineModalOnOverlay(event)">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <p class="modal-title" id="routineModalTitle">매일 루틴 추가</p>
+      <button class="modal-close" onclick="closeRoutineModal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="field-group">
+      <input type="text" class="title-input" id="routineTitleInput" placeholder="예: 비타민 챙겨먹기">
+    </div>
+
+    <div class="field-group hide" id="routineDowFieldGroup">
+      <p class="field-label">무슨 요일</p>
+      <div class="choice-row" id="routineDowChips"></div>
+    </div>
+
+    <div class="field-group hide" id="routineDomFieldGroup">
+      <p class="field-label">매달 며칠</p>
+      <div class="choice-row" id="routineDomChips"></div>
+    </div>
+
+    <button class="submit-btn" id="submitRoutineBtn" onclick="submitRoutine()" disabled>추가하기</button>
+  </div>
+</div>
+
 <!-- ===================== 레벨업 오버레이 ===================== -->
 <div class="levelup-overlay" id="levelupOverlay">
   <div class="levelup-card">
@@ -999,7 +1215,14 @@ let state = {
   lastSeenLevel: 1,
   subtaskDraft: [],           // 등록 모달에서 임시로 입력 중인 하위 항목들
   focusSession: null,         // { taskId, startedAt } 진행중인 집중 세션
-  expandedTaskIds: []         // 7일뷰/캘린더에서 펼쳐진 task id 목록
+  expandedTaskIds: [],        // 7일뷰/캘린더에서 펼쳐진 task id 목록
+  dumpMessages: [],           // [{ id, text, resolved, createdAt }] 브레인덤프 메모
+  dumpExpanded: false,        // 브레인덤프 채팅창 펼침 여부
+  pendingDumpId: null,        // 등록 모달이 어떤 메모에서 열렸는지 (등록 완료 시 그 메모를 resolved 처리)
+  routines: [],                // [{ id, title, frequency:'daily'|'weekly'|'monthly', dow, dayOfMonth, completions:{periodKey:true}, createdAt }]
+  selectedRoutineFrequency: 'daily',
+  selectedRoutineDow: null,
+  selectedRoutineDom: null
 };
 
 const STORAGE_KEY = "schedule_app_local_v2";
@@ -1014,6 +1237,8 @@ function loadLocal(){
       state.charImageUrl = parsed.charImageUrl || null;
       state.lastSeenLevel = parsed.lastSeenLevel || 1;
       state.focusSession = parsed.focusSession || null;
+      state.dumpMessages = parsed.dumpMessages || [];
+      state.routines = parsed.routines || [];
     }
   }catch(e){ console.warn(e); }
 }
@@ -1023,7 +1248,9 @@ function saveLocal(){
     projects: state.projects,
     charImageUrl: state.charImageUrl,
     lastSeenLevel: state.lastSeenLevel,
-    focusSession: state.focusSession
+    focusSession: state.focusSession,
+    dumpMessages: state.dumpMessages,
+    routines: state.routines
   }));
 }
 
@@ -1116,6 +1343,7 @@ function goPage(name){
   }
   if(name === 'settings') renderSettingsPage();
   if(name === 'recap') renderRecapPage();
+  if(name === 'routines') renderRoutinesPage();
 }
 
 /* =========================================================================
@@ -1347,11 +1575,19 @@ function getTotalDone(){
 function getTotalFocusSeconds(){
   return state.tasks.reduce((sum,t)=> sum + (t.focusSeconds||0), 0);
 }
+function getTotalRoutineCompletions(){
+  // 모든 루틴의 completions 객체에서 true인 항목 개수 총합 (주기별 누적 체크 횟수)
+  return state.routines.reduce((sum, r) => {
+    if(!r.completions) return sum;
+    return sum + Object.values(r.completions).filter(Boolean).length;
+  }, 0);
+}
 function getTotalPoints(){
   const donePoints = getTotalDone() * POINT_PER_COMPLETE;
+  const routinePoints = getTotalRoutineCompletions() * POINT_PER_COMPLETE;
   const focusMinutes = getTotalFocusSeconds() / 60;
   const focusPoints = Math.floor(focusMinutes / 10) * POINT_PER_10MIN;
-  return donePoints + focusPoints;
+  return donePoints + routinePoints + focusPoints;
 }
 function getLevel(points){
   return Math.floor(points / POINTS_PER_LEVEL) + 1;
@@ -1436,6 +1672,114 @@ function closeLevelup(){
 /* =========================================================================
    히어로 영역 렌더링
    ========================================================================= */
+/* =========================================================================
+   브레인덤프 채팅창
+   ========================================================================= */
+const DUMP_GREETINGS = [
+  "오늘은 뭐가 떠올랐어요?",
+  "생각나는 거 있으면 던져두세요",
+  "메모해두면 나중에 편해요"
+];
+
+function toggleDumpExpanded(){
+  state.dumpExpanded = !state.dumpExpanded;
+  document.getElementById('dumpBody').classList.toggle('open', state.dumpExpanded);
+  document.getElementById('dumpToggleIc').classList.toggle('open', state.dumpExpanded);
+  if(state.dumpExpanded){
+    renderDumpMessages();
+    setTimeout(()=>{
+      const scroll = document.getElementById('dumpScroll');
+      scroll.scrollTop = scroll.scrollHeight;
+      document.getElementById('dumpInput').focus();
+    }, 50);
+  }
+}
+
+function sendDumpMessage(){
+  const input = document.getElementById('dumpInput');
+  const text = input.value.trim();
+  if(!text) return;
+
+  const msg = {
+    id: 'dump_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    text,
+    resolved: false,
+    createdAt: new Date().toISOString()
+  };
+  state.dumpMessages.push(msg);
+  saveLocal();
+  persistDumpMessage(msg);
+
+  input.value = '';
+  renderDumpMessages();
+  const scroll = document.getElementById('dumpScroll');
+  scroll.scrollTop = scroll.scrollHeight;
+}
+document.getElementById('dumpInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') sendDumpMessage();
+});
+
+function renderDumpMessages(){
+  const scroll = document.getElementById('dumpScroll');
+  const greeting = DUMP_GREETINGS[new Date().getDate() % DUMP_GREETINGS.length];
+
+  let html = `
+    <div class="dump-empty-hint">
+      <div class="char-mini">${state.charImageUrl ? `<img src="${state.charImageUrl}" alt="">` : `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>`}</div>
+      <div class="dump-bubble-char">${greeting}</div>
+    </div>`;
+
+  html += state.dumpMessages.map(m=>`
+    <div class="dump-row ${m.resolved?'resolved':''}">
+      <button class="dump-check ${m.resolved?'checked':''}" onclick="onDumpCheckClick('${m.id}')" title="${m.resolved ? '등록 완료' : '할 일/일정으로 등록하기'}">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+      </button>
+      <div class="dump-bubble">${escapeHtml(m.text)}</div>
+      <button class="dump-delete-btn" onclick="deleteDumpMessage('${m.id}')" title="메모 삭제">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  scroll.innerHTML = html;
+}
+
+function deleteDumpMessage(dumpId){
+  state.dumpMessages = state.dumpMessages.filter(x=>x.id!==dumpId);
+  saveLocal();
+  if(firebaseReady && db){
+    db.collection('schedule_dump').doc(dumpId).delete().catch(err=>{
+      console.warn("브레인덤프 삭제 실패:", err);
+    });
+  }
+  renderDumpMessages();
+}
+
+function onDumpCheckClick(dumpId){
+  const m = state.dumpMessages.find(x=>x.id===dumpId);
+  if(!m) return;
+  if(m.resolved){
+    // 이미 처리된 메모를 다시 누르면 처리 취소 (실수로 누른 경우 되돌릴 수 있게)
+    m.resolved = false;
+    saveLocal();
+    persistDumpMessage(m);
+    renderDumpMessages();
+    return;
+  }
+  // 미처리 메모 -> 등록 모달을 그 내용으로 채워서 열기
+  state.pendingDumpId = dumpId;
+  openTaskModal();
+  document.getElementById('taskTitleInput').value = m.text;
+  validateSubmit();
+}
+
+function persistDumpMessage(msg){
+  if(!firebaseReady || !db) return;
+  db.collection('schedule_dump').doc(msg.id).set(msg).catch(err=>{
+    console.warn("브레인덤프 저장 실패 (로컬에는 저장됨):", err);
+  });
+}
+
 function renderHero(){
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -1934,6 +2278,7 @@ function openTaskModal(){
 function closeTaskModal(){
   document.getElementById('taskModalOverlay').classList.remove('open');
   document.getElementById('mainFab').classList.remove('hide');
+  state.pendingDumpId = null; // 모달을 그냥 닫은 경우(취소) 메모 연결 해제
 }
 function closeTaskModalOnOverlay(e){ if(e.target.id === 'taskModalOverlay') closeTaskModal(); }
 
@@ -2138,6 +2483,18 @@ function submitTask(){
   saveLocal();
   persistTask(newTask);
 
+  // 브레인덤프 메모에서 등록한 경우, 그 메모를 처리완료로 표시
+  if(state.pendingDumpId){
+    const m = state.dumpMessages.find(x=>x.id===state.pendingDumpId);
+    if(m){
+      m.resolved = true;
+      saveLocal();
+      persistDumpMessage(m);
+    }
+    state.pendingDumpId = null;
+    if(state.dumpExpanded) renderDumpMessages();
+  }
+
   closeTaskModal();
   renderWeekView();
   if(document.getElementById('page-calendar').classList.contains('active')){
@@ -2193,6 +2550,230 @@ function applyCharImage(){
   const wrapSettings = document.getElementById('charWrapSettings');
   wrapSettings.classList.remove('empty');
   wrapSettings.innerHTML = `<img src="${url}" alt="캐릭터 이미지">`;
+}
+
+/* =========================================================================
+   루틴 (매일/매주/매달 반복 체크리스트)
+   ========================================================================= */
+const ROUTINE_FREQ_LABEL = { daily:'매일', weekly:'매주', monthly:'매달' };
+
+// 루틴의 "이번 주기"를 나타내는 키. 이 키가 바뀌면 체크가 자동으로 초기화된 것처럼 동작함.
+function getRoutinePeriodKey(routine, baseDate){
+  const d = baseDate || new Date();
+  if(routine.frequency === 'daily'){
+    return fmtDate(d);
+  }
+  if(routine.frequency === 'weekly'){
+    return fmtDate(getMondayOf(d));
+  }
+  // monthly
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function isRoutineDoneNow(routine){
+  const key = getRoutinePeriodKey(routine);
+  return !!(routine.completions && routine.completions[key]);
+}
+
+function toggleRoutineCheck(routineId){
+  const r = state.routines.find(x=>x.id===routineId);
+  if(!r) return;
+  const key = getRoutinePeriodKey(r);
+  if(!r.completions) r.completions = {};
+  const willBeDone = !r.completions[key];
+  r.completions[key] = willBeDone;
+  saveLocal();
+  persistRoutine(r);
+  renderRoutinesPage();
+
+  if(willBeDone){
+    showToast("루틴 완료했어요");
+    checkLevelUp(); // 루틴 완료도 포인트(완료 개수 기반)에 합류
+  }
+}
+
+// 루틴의 연속 기록(스트릭) 계산: 현재 주기 직전까지 거슬러 올라가며 연속으로 체크된 주기 수
+function getRoutineStreak(routine){
+  if(!routine.completions) return 0;
+  let cursor = new Date();
+
+  // 오늘(이번 주기) 아직 체크 전이면, 어제(직전 주기) 기준부터 거슬러 올라가며 센다.
+  // 이러면 "어제까지 쌓아온 연속 기록"이 오늘 체크하기 전까지도 계속 보여서 동기부여가 끊기지 않음.
+  const currentKey = getRoutinePeriodKey(routine, cursor);
+  if(!routine.completions[currentKey]){
+    if(routine.frequency === 'daily') cursor.setDate(cursor.getDate()-1);
+    else if(routine.frequency === 'weekly') cursor.setDate(cursor.getDate()-7);
+    else cursor.setMonth(cursor.getMonth()-1);
+  }
+
+  let streak = 0;
+  while(true){
+    const key = getRoutinePeriodKey(routine, cursor);
+    if(routine.completions[key]){
+      streak++;
+      if(routine.frequency === 'daily') cursor.setDate(cursor.getDate()-1);
+      else if(routine.frequency === 'weekly') cursor.setDate(cursor.getDate()-7);
+      else cursor.setMonth(cursor.getMonth()-1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function renderRoutinesPage(){
+  ['daily','weekly','monthly'].forEach(freq=>{
+    const containerId = freq==='daily' ? 'routineListDaily' : (freq==='weekly' ? 'routineListWeekly' : 'routineListMonthly');
+    const container = document.getElementById(containerId);
+    const list = state.routines.filter(r=>r.frequency===freq);
+
+    if(list.length === 0){
+      const emptyLabel = freq==='daily' ? '아직 매일 루틴이 없어요' : (freq==='weekly' ? '아직 매주 루틴이 없어요' : '아직 매달 루틴이 없어요');
+      container.innerHTML = `<div class="routine-empty">${emptyLabel}</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(r=>{
+      const done = isRoutineDoneNow(r);
+      const streak = getRoutineStreak(r);
+      let metaLabel = '';
+      if(r.frequency === 'weekly'){
+        metaLabel = DOW[r.dow] + '요일마다';
+      } else if(r.frequency === 'monthly'){
+        metaLabel = `매달 ${r.dayOfMonth}일`;
+      }
+      const streakUnit = r.frequency==='daily' ? '일' : (r.frequency==='weekly' ? '주' : '달');
+      const pebbles = Math.min(streak, 8);
+      const pebblesHtml = streak > 0 ? `
+        <div class="routine-pebbles">
+          ${Array.from({length:pebbles}).map(()=>'<span class="routine-pebble"></span>').join('')}
+          <span class="routine-pebble-count">${streak}${streakUnit} 연속</span>
+        </div>` : '';
+
+      return `
+        <div class="routine-row ${done?'done':''}">
+          <button class="routine-check ${done?'checked':''}" onclick="toggleRoutineCheck('${r.id}')">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+          </button>
+          <div class="routine-body">
+            <p class="routine-title">${escapeHtml(r.title)}</p>
+            <div class="routine-meta">${metaLabel ? metaLabel+' · ' : ''}${pebblesHtml ? '' : '아직 기록이 없어요'}</div>
+            ${pebblesHtml}
+          </div>
+          <button class="routine-delete-btn" onclick="deleteRoutine('${r.id}')" title="루틴 삭제">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+          </button>
+        </div>`;
+    }).join('');
+  });
+}
+
+function deleteRoutine(routineId){
+  if(!confirm("이 루틴을 삭제할까요? 지금까지의 연속 기록도 함께 사라져요.")) return;
+  state.routines = state.routines.filter(r=>r.id!==routineId);
+  saveLocal();
+  if(firebaseReady && db){
+    db.collection('schedule_routines').doc(routineId).delete().catch(err=>{
+      console.warn("루틴 삭제 실패:", err);
+    });
+  }
+  renderRoutinesPage();
+  showToast("루틴을 삭제했어요");
+}
+
+/* ---- 루틴 등록 모달 ---- */
+function openRoutineModal(frequency){
+  state.selectedRoutineFrequency = frequency;
+  state.selectedRoutineDow = new Date().getDay();
+  state.selectedRoutineDom = 1;
+
+  document.getElementById('routineTitleInput').value = '';
+  document.getElementById('routineModalTitle').textContent = `${ROUTINE_FREQ_LABEL[frequency]} 루틴 추가`;
+
+  document.getElementById('routineDowFieldGroup').classList.toggle('hide', frequency!=='weekly');
+  document.getElementById('routineDomFieldGroup').classList.toggle('hide', frequency!=='monthly');
+
+  if(frequency === 'weekly') renderRoutineDowChips();
+  if(frequency === 'monthly') renderRoutineDomChips();
+
+  validateRoutineSubmit();
+  document.getElementById('routineModalOverlay').classList.add('open');
+  document.getElementById('mainFab').classList.add('hide');
+}
+function closeRoutineModal(){
+  document.getElementById('routineModalOverlay').classList.remove('open');
+  document.getElementById('mainFab').classList.remove('hide');
+}
+function closeRoutineModalOnOverlay(e){ if(e.target.id==='routineModalOverlay') closeRoutineModal(); }
+
+function renderRoutineDowChips(){
+  const container = document.getElementById('routineDowChips');
+  container.innerHTML = DOW.map((d,idx)=>`
+    <button class="choice-btn ${idx===state.selectedRoutineDow?'selected':''}" onclick="selectRoutineDow(this, ${idx})">${d}요일</button>
+  `).join('');
+}
+function selectRoutineDow(btn, idx){
+  state.selectedRoutineDow = idx;
+  document.querySelectorAll('#routineDowChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function renderRoutineDomChips(){
+  const container = document.getElementById('routineDomChips');
+  const commonDays = [1, 5, 10, 15, 20, 25];
+  container.innerHTML = commonDays.map(d=>`
+    <button class="choice-btn ${d===state.selectedRoutineDom?'selected':''}" onclick="selectRoutineDom(this, ${d})">${d}일</button>
+  `).join('') + `
+    <button class="choice-btn ${!commonDays.includes(state.selectedRoutineDom)?'selected':''}" onclick="promptCustomDom(this)">직접 입력</button>`;
+}
+function selectRoutineDom(btn, day){
+  state.selectedRoutineDom = day;
+  document.querySelectorAll('#routineDomChips .choice-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function promptCustomDom(btn){
+  const val = prompt("매달 며칠로 할까요? (1~28 권장)", state.selectedRoutineDom || 1);
+  if(!val) return;
+  const num = Math.max(1, Math.min(31, parseInt(val,10) || 1));
+  state.selectedRoutineDom = num;
+  renderRoutineDomChips();
+}
+
+function validateRoutineSubmit(){
+  const title = document.getElementById('routineTitleInput').value.trim();
+  document.getElementById('submitRoutineBtn').disabled = title.length === 0;
+}
+document.getElementById('routineTitleInput').addEventListener('input', validateRoutineSubmit);
+
+function submitRoutine(){
+  const title = document.getElementById('routineTitleInput').value.trim();
+  if(!title) return;
+
+  const freq = state.selectedRoutineFrequency;
+  const newRoutine = {
+    id: 'routine_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    title,
+    frequency: freq,
+    dow: freq==='weekly' ? state.selectedRoutineDow : null,
+    dayOfMonth: freq==='monthly' ? state.selectedRoutineDom : null,
+    completions: {},
+    createdAt: new Date().toISOString()
+  };
+
+  state.routines.push(newRoutine);
+  saveLocal();
+  persistRoutine(newRoutine);
+
+  closeRoutineModal();
+  renderRoutinesPage();
+  showToast("루틴을 추가했어요");
+}
+
+function persistRoutine(routine){
+  if(!firebaseReady || !db) return;
+  db.collection('schedule_routines').doc(routine.id).set(routine).catch(err=>{
+    console.warn("루틴 저장 실패 (로컬에는 저장됨):", err);
+  });
 }
 
 /* =========================================================================
@@ -2459,6 +3040,27 @@ function subscribeFirestore(){
       if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
     }
   }, err=> console.warn("Firestore 구독 실패:", err));
+
+  db.collection('schedule_dump').orderBy('createdAt').onSnapshot(snapshot=>{
+    const remoteDumps = [];
+    snapshot.forEach(doc=> remoteDumps.push(doc.data()));
+    if(remoteDumps.length > 0){
+      state.dumpMessages = remoteDumps;
+      saveLocal();
+      if(state.dumpExpanded) renderDumpMessages();
+    }
+  }, err=> console.warn("브레인덤프 구독 실패:", err));
+
+  db.collection('schedule_routines').onSnapshot(snapshot=>{
+    const remoteRoutines = [];
+    snapshot.forEach(doc=> remoteRoutines.push(doc.data()));
+    if(remoteRoutines.length > 0){
+      state.routines = remoteRoutines;
+      saveLocal();
+      if(document.getElementById('page-routines').classList.contains('active')) renderRoutinesPage();
+      renderHero(); // 포인트/레벨이 루틴에도 영향받으니 갱신
+    }
+  }, err=> console.warn("루틴 구독 실패:", err));
 
   db.collection('schedule_settings').doc('character').get().then(doc=>{
     if(doc.exists && doc.data().imageUrl){
